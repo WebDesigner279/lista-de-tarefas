@@ -25,7 +25,8 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`} 
+      suppressHydrationWarning //retira os orros de hidrataçao do nextjs, quando o html gerado no servidor é diferente do html gerado no cliente
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
