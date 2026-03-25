@@ -1,8 +1,17 @@
+"use server";
 import prisma from "@/lib/prisma";
 
-const getTasks = async () => {
-  const tasks = await prisma.tasks.findMany();
-  return tasks;
-};
+export const getTasks = async () => {
+ try {
+    const tasks = await prisma.tasks.findMany();
 
-export default getTasks;
+    if (!tasks) {
+      console.log("Nenhuma tarefa encontrada.");
+      return null;
+    }
+    return tasks;
+  } catch (error) {
+    console.error("Erro ao buscar tarefas:", error);
+    return null;
+ }
+};
