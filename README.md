@@ -1,36 +1,26 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Lista de tarefas
 
-## Getting Started
+Aplicação Next.js com App Router, server actions e Prisma usando PostgreSQL local.
 
-First, run the development server:
+## Como rodar
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. Instale as dependências com `npm install`.
+2. Garanta que o PostgreSQL local esteja disponível com a base usada em `DATABASE_URL`.
+3. Rode `npm run dev`.
+4. Acesse `http://localhost:3000` no computador.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+O script de desenvolvimento sobe o Next.js com `--hostname 0.0.0.0`, então a aplicação também fica acessível na rede local para testes em outros dispositivos.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Testar no celular
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Conecte o celular e o computador na mesma rede Wi-Fi.
+2. Descubra o IP local do computador com `ipconfig` no Windows.
+3. Abra `http://SEU_IP_LOCAL:3000` no navegador do celular.
 
-## Learn More
+Exemplo: `http://192.168.18.111:3000`
 
-To learn more about Next.js, take a look at the following resources:
+## Observações sobre o back-end
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- O front-end conversa com o back-end por server actions do próprio Next.js.
+- O banco continua local no computador via `DATABASE_URL`, o que é suficiente para teste pelo celular porque as consultas são executadas no servidor Next.js, não no aparelho.
+- Não há mais configuração de túnel neste projeto.

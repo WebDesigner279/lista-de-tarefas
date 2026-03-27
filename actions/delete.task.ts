@@ -1,19 +1,47 @@
-"use server"
+"use server";
 import prisma from "@/lib/prisma";
+import { publishTaskUpdate } from "@/lib/task-events";
 
-export const deleteTask = async (idTask: string) => {
+export const deleteTask = async (idTask: string, taskName?: string) => {
   try {
-    if (!idTask) return;
+    if (!idTask && !taskName) return false;
 
-    const deletedTask = await prisma.tasks.delete({
-      where: {
-        id: idTask,
+    if (idTask) {
+      try {
+        await prisma.tasks.delete({
+          where: {
+            id: idTask,
+          },
+        });
+
+        publishTaskUpdate();
+        return true;
+      } catch (error) {
+        console.warn(
+          "Falha ao deletar por id. Tentando fallback por nome.",
+          error,
+        );
       }
+    }
+
+    if (!taskName) return false;
+
+    const fallbackDelete = await prisma.tasks.deleteMany({
+      where: {
+        task: {
+          equals: taskName.trim(),
+          mode: "insensitive",
+        },
+      },
     });
 
-    if (!deletedTask) return;
-    return deletedTask;
+    if (fallbackDelete.count === 0) {
+      return false;
+    }
 
+    publishTaskUpdate();
+
+    return true;
   } catch (error) {
     throw error;
   }
