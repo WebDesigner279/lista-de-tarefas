@@ -4,14 +4,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Tasks } from "@prisma/client";
 import { getTasks } from "@/actions/get-tasks";
 import { createTaskAction } from "@/actions/create-task";
+import { clearCompletedTasksAction } from "@/actions/clear-completed-tasks";
 import { deleteTaskAction } from "@/actions/delete-task";
 import { toggleTaskStatus } from "@/actions/toggle-task-status";
+import { MAX_TASK_LENGTH } from "@/features/tasks/constants";
 import { TaskFilter } from "@/features/tasks/types";
 import { toast } from "sonner";
 
 export const useTasks = () => {
   const [taskList, setTaskList] = useState<Tasks[]>([]);
-  const [currentTaskInput, setCurrentTaskInput] = useState<string>("");
   const [activeFilter, setActiveFilter] = useState<TaskFilter>("all");
 
   const totalTasks = useMemo(() => taskList.length, [taskList]);
@@ -85,7 +86,9 @@ export const useTasks = () => {
       }
 
       if (error instanceof Error && error.message === "TASK_NAME_TOO_LONG") {
-        toast.error("A tarefa deve ter no maximo 42 caracteres.");
+        toast.error(
+          `A tarefa deve ter no maximo ${MAX_TASK_LENGTH} caracteres.`,
+        );
         return false;
       }
 
@@ -150,6 +153,29 @@ export const useTasks = () => {
     }
   }, []);
 
+  const clearCompleted = useCallback(async () => {
+    if (completedTasks === 0) return false;
+
+    try {
+      const removedCount = await clearCompletedTasksAction();
+
+      if (removedCount === 0) {
+        toast.error("Nao ha tarefas concluidas para limpar.");
+        return false;
+      }
+
+      setTaskList((prev) => prev.filter((task) => !task.done));
+      toast.success(
+        `${removedCount} tarefa${removedCount > 1 ? "s" : ""} concluida${removedCount > 1 ? "s" : ""} removida${removedCount > 1 ? "s" : ""}.`,
+      );
+      return true;
+    } catch (error) {
+      console.error("Erro ao limpar tarefas concluidas:", error);
+      toast.error("Nao foi possivel limpar as tarefas concluidas.");
+      return false;
+    }
+  }, [completedTasks]);
+
   // SSE subscription
   useEffect(() => {
     const initialSyncTimeout = setTimeout(() => {
@@ -177,8 +203,6 @@ export const useTasks = () => {
 
   return {
     taskList,
-    currentTaskInput,
-    setCurrentTaskInput,
     activeFilter,
     setActiveFilter,
     totalTasks,
@@ -189,5 +213,6 @@ export const useTasks = () => {
     createTask,
     deleteTask,
     toggleTaskDone,
+    clearCompleted,
   };
 };

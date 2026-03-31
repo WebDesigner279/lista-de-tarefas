@@ -1,1 +1,1 @@
-export const MAX_TASK_LENGTH = 42;
+export const MAX_TASK_LENGTH = 38;

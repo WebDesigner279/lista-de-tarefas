@@ -1,6 +1,7 @@
 import { publishTaskUpdate } from "@/lib/task-events";
 import {
   createTaskRecord,
+  deleteCompletedTasks,
   deleteTaskById,
   deleteTasksByNameInsensitive,
   findTaskById,
@@ -66,4 +67,14 @@ export const toggleTaskDoneStatus = async (id: string) => {
   publishTaskUpdate();
 
   return updatedTask;
+};
+
+export const clearCompletedTasks = async () => {
+  const result = await deleteCompletedTasks();
+
+  if (result.count > 0) {
+    publishTaskUpdate();
+  }
+
+  return result.count;
 };

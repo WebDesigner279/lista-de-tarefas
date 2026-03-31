@@ -51,6 +51,14 @@ export const deleteTasksByNameInsensitive = (taskName: string) => {
   });
 };
 
+export const deleteCompletedTasks = () => {
+  return prisma.tasks.deleteMany({
+    where: {
+      done: true,
+    },
+  });
+};
+
 export const updateTaskDoneStatus = (id: string, done: boolean) => {
   return prisma.tasks.update({
     where: { id },

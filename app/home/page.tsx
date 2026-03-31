@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -12,8 +13,6 @@ import { useTasks } from "@/features/tasks/hooks";
 
 const Home = () => {
   const {
-    currentTaskInput,
-    setCurrentTaskInput,
     activeFilter,
     setActiveFilter,
     totalTasks,
@@ -24,46 +23,46 @@ const Home = () => {
     createTask,
     deleteTask,
     toggleTaskDone,
+    clearCompleted,
   } = useTasks();
 
-  const handleAddTask = async () => {
-    const success = await createTask(currentTaskInput);
-    if (success) {
-      setCurrentTaskInput("");
-    }
-  };
+  const handleAddTask = useCallback(
+    async (taskName: string) => createTask(taskName),
+    [createTask],
+  );
 
   return (
-    <main className="w-full min-h-screen bg-gray-100 flex justify-center items-center">
-      <div className="w-full max-w-122.5 sm:max-w-120 md:max-w-160 lg:max-w-3xl px-3">
-        <Card className="w-full p-4">
-          <TaskInput
-            value={currentTaskInput}
-            onChange={setCurrentTaskInput}
-            onSubmit={handleAddTask}
-          />
+    <main className="relative w-full min-h-screen bg-gray-100">
+      <div className="fixed inset-0 flex items-center justify-center p-3">
+        <div className="w-full max-w-122.5 sm:max-w-120 md:max-w-160 lg:max-w-3xl">
+          <Card className="w-full max-h-[calc(100dvh-1.5rem)] overflow-hidden p-4">
+            <TaskInput onSubmit={handleAddTask} />
 
-          <Separator />
+            <Separator />
 
-          <TaskFilters
-            activeFilter={activeFilter}
-            onFilterChange={setActiveFilter}
-          />
+            <TaskFilters
+              activeFilter={activeFilter}
+              onFilterChange={setActiveFilter}
+            />
 
-          <TaskList
-            tasks={filteredTasks}
-            onToggle={toggleTaskDone}
-            onDelete={deleteTask}
-          />
+            <TaskList
+              tasks={filteredTasks}
+              onToggle={toggleTaskDone}
+              onDelete={deleteTask}
+            />
 
-          <TaskStats
-            activeFilter={activeFilter}
-            totalTasks={totalTasks}
-            openTasks={openTasks}
-            completedTasks={completedTasks}
-            completionPercentage={completionPercentage}
-          />
-        </Card>
+            <TaskStats
+              activeFilter={activeFilter}
+              totalTasks={totalTasks}
+              openTasks={openTasks}
+              completedTasks={completedTasks}
+              completionPercentage={completionPercentage}
+              onClearCompleted={() => {
+                void clearCompleted();
+              }}
+            />
+          </Card>
+        </div>
       </div>
     </main>
   );
