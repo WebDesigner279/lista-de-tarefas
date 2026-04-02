@@ -65,3 +65,10 @@ export const updateTaskDoneStatus = (id: string, done: boolean) => {
     data: { done },
   });
 };
+
+export const updateTaskNameById = (id: string, taskName: string) => {
+  return prisma.tasks.update({
+    where: { id },
+    data: { task: taskName },
+  });
+};

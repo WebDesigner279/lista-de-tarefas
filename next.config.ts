@@ -1,7 +1,11 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["192.168.18.111"],
+  turbopack: {
+    root: path.resolve(process.cwd()),
+  },
   headers: async () => {
     return [
       {

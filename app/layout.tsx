@@ -26,11 +26,13 @@ export default function RootLayout({
   return (
     <html
       lang="PT-BR"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`} 
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning //retira os erros de hidrataçao do nextjs, quando o html gerado no servidor é diferente do html gerado no cliente
     >
-        <Toaster position="top-right" richColors/>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <Toaster position="top-right" richColors />
+      </body>
     </html>
   );
 }

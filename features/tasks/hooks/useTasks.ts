@@ -7,9 +7,38 @@ import { createTaskAction } from "@/actions/create-task";
 import { clearCompletedTasksAction } from "@/actions/clear-completed-tasks";
 import { deleteTaskAction } from "@/actions/delete-task";
 import { toggleTaskStatus } from "@/actions/toggle-task-status";
+import { updateTaskAction } from "@/actions/update-task";
 import { MAX_TASK_LENGTH } from "@/features/tasks/constants";
-import { TaskFilter } from "@/features/tasks/types";
+import { CreateTasksResult, TaskFilter } from "@/features/tasks/types";
 import { toast } from "sonner";
+
+const buildBatchCreationMessage = ({
+  createdTasks,
+  duplicateTasks,
+  invalidTasks,
+}: CreateTasksResult) => {
+  const messages: string[] = [];
+
+  if (createdTasks.length > 0) {
+    messages.push(
+      `${createdTasks.length} tarefa${createdTasks.length > 1 ? "s" : ""} cadastrada${createdTasks.length > 1 ? "s" : ""}.`,
+    );
+  }
+
+  if (duplicateTasks.length > 0) {
+    messages.push(
+      `${duplicateTasks.length} duplicada${duplicateTasks.length > 1 ? "s" : ""} ignorada${duplicateTasks.length > 1 ? "s" : ""}.`,
+    );
+  }
+
+  if (invalidTasks.length > 0) {
+    messages.push(
+      `${invalidTasks.length} com mais de ${MAX_TASK_LENGTH} caracteres ignorada${invalidTasks.length > 1 ? "s" : ""}.`,
+    );
+  }
+
+  return messages.join(" ");
+};
 
 export const useTasks = () => {
   const [taskList, setTaskList] = useState<Tasks[]>([]);
@@ -70,21 +99,36 @@ export const useTasks = () => {
         return false;
       }
 
-      const myNewTask = await createTaskAction(normalizedTask);
+      const creationResult = await createTaskAction(normalizedTask);
 
-      if (!myNewTask) {
+      if (creationResult.createdTasks.length === 0) {
+        if (creationResult.duplicateTasks.length > 0) {
+          toast.error("Todas as tarefas informadas ja existem na lista.");
+          return false;
+        }
+
+        if (creationResult.invalidTasks.length > 0) {
+          toast.error(
+            `Cada tarefa deve ter no maximo ${MAX_TASK_LENGTH} caracteres.`,
+          );
+          return false;
+        }
+
         toast.error("Nao foi possivel cadastrar a tarefa.");
         return false;
       }
 
-      setTaskList((prev) => [...prev, myNewTask]);
-      return true;
-    } catch (error) {
-      if (error instanceof Error && error.message === "DUPLICATE_TASK") {
-        toast.error("Essa tarefa ja existe na lista.");
-        return false;
+      setTaskList((prev) => [...prev, ...creationResult.createdTasks]);
+
+      if (
+        creationResult.duplicateTasks.length > 0 ||
+        creationResult.invalidTasks.length > 0
+      ) {
+        toast.warning(buildBatchCreationMessage(creationResult));
       }
 
+      return true;
+    } catch (error) {
       if (error instanceof Error && error.message === "TASK_NAME_TOO_LONG") {
         toast.error(
           `A tarefa deve ter no maximo ${MAX_TASK_LENGTH} caracteres.`,
@@ -153,6 +197,53 @@ export const useTasks = () => {
     }
   }, []);
 
+  const editTask = useCallback(async (id: string, taskName: string) => {
+    if (!id) return false;
+
+    const normalizedTask = taskName.trim();
+
+    if (!normalizedTask) {
+      toast.error("Por favor, preencha o campo da tarefa!");
+      return false;
+    }
+
+    try {
+      const updatedTask = await updateTaskAction(id, normalizedTask);
+
+      if (!updatedTask) {
+        toast.error("Nao foi possivel atualizar a tarefa.");
+        return false;
+      }
+
+      setTaskList((prev) =>
+        prev.map((item) => (item.id === updatedTask.id ? updatedTask : item)),
+      );
+      toast.success("Tarefa editada com sucesso!");
+      return true;
+    } catch (error) {
+      if (error instanceof Error && error.message === "DUPLICATE_TASK") {
+        toast.error("Essa tarefa ja existe na lista.");
+        return false;
+      }
+
+      if (error instanceof Error && error.message === "TASK_NAME_TOO_LONG") {
+        toast.error(
+          `A tarefa deve ter no maximo ${MAX_TASK_LENGTH} caracteres.`,
+        );
+        return false;
+      }
+
+      if (error instanceof Error && error.message === "TASK_NOT_FOUND") {
+        toast.error("A tarefa informada nao foi encontrada.");
+        return false;
+      }
+
+      console.error("Erro ao editar tarefa:", error);
+      toast.error("Nao foi possivel atualizar a tarefa.");
+      return false;
+    }
+  }, []);
+
   const clearCompleted = useCallback(async () => {
     if (completedTasks === 0) return false;
 
@@ -211,6 +302,7 @@ export const useTasks = () => {
     completionPercentage,
     filteredTasks,
     createTask,
+    editTask,
     deleteTask,
     toggleTaskDone,
     clearCompleted,

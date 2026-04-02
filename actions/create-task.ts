@@ -1,7 +1,7 @@
 "use server";
 
-import { createTask } from "@/features/tasks/service";
+import { createTasks } from "@/features/tasks/service";
 
-export const createTaskAction = async (taskName: string) => {
-  return createTask(taskName);
+export const createTaskAction = async (taskNameInput: string) => {
+  return createTasks(taskNameInput);
 };

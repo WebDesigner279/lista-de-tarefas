@@ -21,6 +21,7 @@ const Home = () => {
     completionPercentage,
     filteredTasks,
     createTask,
+    editTask,
     deleteTask,
     toggleTaskDone,
     clearCompleted,
@@ -29,6 +30,11 @@ const Home = () => {
   const handleAddTask = useCallback(
     async (taskName: string) => createTask(taskName),
     [createTask],
+  );
+
+  const handleEditTask = useCallback(
+    async (id: string, taskName: string) => editTask(id, taskName),
+    [editTask],
   );
 
   return (
@@ -48,6 +54,7 @@ const Home = () => {
             <TaskList
               tasks={filteredTasks}
               onToggle={toggleTaskDone}
+              onEdit={handleEditTask}
               onDelete={deleteTask}
             />
 

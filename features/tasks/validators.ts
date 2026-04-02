@@ -2,6 +2,10 @@ import { MAX_TASK_LENGTH } from "@/features/tasks/constants";
 
 export const normalizeTaskName = (taskName: string) => taskName.trim();
 
+export const splitTaskNames = (taskNameInput: string) => {
+  return taskNameInput.split(",").map(normalizeTaskName).filter(Boolean);
+};
+
 export const validateTaskName = (taskName: string) => {
   const normalizedTask = normalizeTaskName(taskName);
 
