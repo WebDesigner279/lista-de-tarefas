@@ -10,55 +10,52 @@ import {
   updateTaskDoneStatus,
   updateTaskNameById,
 } from "@/features/tasks/repository";
+import { TaskError, TaskErrorCode, isTaskError } from "@/features/tasks/errors";
 import {
+  createTaskLookupKey,
   normalizeTaskName,
   splitTaskNames,
   validateTaskName,
 } from "@/features/tasks/validators";
-import { CreateTasksResult } from "@/features/tasks/types";
+import { CreateTaskBatchResult, TaskRecord } from "@/features/tasks/types";
 
-export const createTask = async (taskName: string) => {
-  const normalizedTask = validateTaskName(taskName);
+const ensureTaskDoesNotExist = async (
+  taskName: string,
+  currentTaskId?: string,
+) => {
+  const duplicatedTask = await findTaskByNameInsensitive(taskName);
 
-  const duplicatedTask = await findTaskByNameInsensitive(normalizedTask);
-  if (duplicatedTask) {
-    throw new Error("DUPLICATE_TASK");
+  if (duplicatedTask && duplicatedTask.id !== currentTaskId) {
+    throw new TaskError(TaskErrorCode.DuplicateTask);
   }
-
-  const newTask = await createTaskRecord(normalizedTask);
-  publishTaskUpdate();
-
-  return newTask;
 };
 
-export const createTasks = async (
-  taskNameInput: string,
-): Promise<CreateTasksResult> => {
-  const parsedTasks = splitTaskNames(taskNameInput);
+const collectTaskCreationCandidates = (taskNameInput: string) => {
+  const parsedTaskNames = splitTaskNames(taskNameInput);
 
-  if (parsedTasks.length === 0) {
-    throw new Error("TASK_NAME_REQUIRED");
+  if (parsedTaskNames.length === 0) {
+    throw new TaskError(TaskErrorCode.NameRequired);
   }
 
-  const seenTasks = new Set<string>();
-  const uniqueTasks: string[] = [];
+  const seenTaskKeys = new Set<string>();
+  const validTaskNames: string[] = [];
   const duplicateTasks: string[] = [];
   const invalidTasks: string[] = [];
 
-  for (const rawTaskName of parsedTasks) {
+  for (const rawTaskName of parsedTaskNames) {
     try {
-      const normalizedTask = validateTaskName(rawTaskName);
-      const taskKey = normalizedTask.toLocaleLowerCase("pt-BR");
+      const normalizedTaskName = validateTaskName(rawTaskName);
+      const taskLookupKey = createTaskLookupKey(normalizedTaskName);
 
-      if (seenTasks.has(taskKey)) {
-        duplicateTasks.push(normalizedTask);
+      if (seenTaskKeys.has(taskLookupKey)) {
+        duplicateTasks.push(normalizedTaskName);
         continue;
       }
 
-      seenTasks.add(taskKey);
-      uniqueTasks.push(normalizedTask);
+      seenTaskKeys.add(taskLookupKey);
+      validTaskNames.push(normalizedTaskName);
     } catch (error) {
-      if (error instanceof Error && error.message === "TASK_NAME_TOO_LONG") {
+      if (isTaskError(error, TaskErrorCode.NameTooLong)) {
         invalidTasks.push(rawTaskName);
         continue;
       }
@@ -67,9 +64,20 @@ export const createTasks = async (
     }
   }
 
-  const createdTasks = [];
+  return {
+    validTaskNames,
+    duplicateTasks,
+    invalidTasks,
+  };
+};
 
-  for (const taskName of uniqueTasks) {
+const createUniqueTasks = async (
+  taskNames: string[],
+  duplicateTasks: string[],
+) => {
+  const createdTasks: TaskRecord[] = [];
+
+  for (const taskName of taskNames) {
     const duplicatedTask = await findTaskByNameInsensitive(taskName);
 
     if (duplicatedTask) {
@@ -77,9 +85,31 @@ export const createTasks = async (
       continue;
     }
 
-    const newTask = await createTaskRecord(taskName);
-    createdTasks.push(newTask);
+    const createdTask = await createTaskRecord(taskName);
+    createdTasks.push(createdTask);
   }
+
+  return createdTasks;
+};
+
+export const createTask = async (taskName: string) => {
+  const normalizedTaskName = validateTaskName(taskName);
+
+  await ensureTaskDoesNotExist(normalizedTaskName);
+
+  const newTask = await createTaskRecord(normalizedTaskName);
+  publishTaskUpdate();
+
+  return newTask;
+};
+
+export const createTasks = async (
+  taskNameInput: string,
+): Promise<CreateTaskBatchResult> => {
+  const { validTaskNames, duplicateTasks, invalidTasks } =
+    collectTaskCreationCandidates(taskNameInput);
+
+  const createdTasks = await createUniqueTasks(validTaskNames, duplicateTasks);
 
   if (createdTasks.length > 0) {
     publishTaskUpdate();
@@ -135,13 +165,13 @@ export const toggleTaskDoneStatus = async (id: string) => {
 
 export const updateTaskName = async (id: string, taskName: string) => {
   if (!id) {
-    throw new Error("TASK_NOT_FOUND");
+    throw new TaskError(TaskErrorCode.TaskNotFound);
   }
 
   const currentTask = await findTaskById(id);
 
   if (!currentTask) {
-    throw new Error("TASK_NOT_FOUND");
+    throw new TaskError(TaskErrorCode.TaskNotFound);
   }
 
   const normalizedTask = validateTaskName(taskName);
@@ -150,11 +180,7 @@ export const updateTaskName = async (id: string, taskName: string) => {
     return currentTask;
   }
 
-  const duplicatedTask = await findTaskByNameInsensitive(normalizedTask);
-
-  if (duplicatedTask && duplicatedTask.id !== id) {
-    throw new Error("DUPLICATE_TASK");
-  }
+  await ensureTaskDoesNotExist(normalizedTask, id);
 
   const updatedTask = await updateTaskNameById(id, normalizedTask);
   publishTaskUpdate();

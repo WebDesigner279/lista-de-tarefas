@@ -9,6 +9,13 @@ Aplicação Next.js com App Router, server actions e Prisma usando PostgreSQL lo
 3. Rode `npm run dev`.
 4. Acesse `http://localhost:3000` no computador.
 
+## Testes
+
+1. Rode `npm run test` para executar a suíte uma vez.
+2. Rode `npm run test:watch` para acompanhar alterações em tempo real.
+
+Os testes atuais cobrem as partes puras da feature de tarefas, com foco em validação e helpers de estado.
+
 O script de desenvolvimento sobe o Next.js com `--hostname 0.0.0.0`, então a aplicação também fica acessível na rede local para testes em outros dispositivos.
 
 ## Testar no celular

@@ -11,7 +11,14 @@ import {
 } from "@/components/tasks";
 import { useTasks } from "@/features/tasks/hooks";
 
-const Home = () => {
+const PAGE_SHELL_CLASS_NAME =
+  "fixed inset-0 flex items-center justify-center p-3";
+const PAGE_CONTENT_WIDTH_CLASS_NAME =
+  "w-full max-w-[30.625rem] sm:max-w-[30rem] md:max-w-[40rem] lg:max-w-3xl";
+const TASK_CARD_CLASS_NAME =
+  "w-full max-h-[calc(100dvh-1.5rem)] overflow-hidden p-4";
+
+const HomePage = () => {
   const {
     activeFilter,
     setActiveFilter,
@@ -27,22 +34,26 @@ const Home = () => {
     clearCompleted,
   } = useTasks();
 
-  const handleAddTask = useCallback(
+  const handleCreateTask = useCallback(
     async (taskName: string) => createTask(taskName),
     [createTask],
   );
 
-  const handleEditTask = useCallback(
+  const handleSaveTask = useCallback(
     async (id: string, taskName: string) => editTask(id, taskName),
     [editTask],
   );
 
+  const handleClearCompletedTasks = useCallback(() => {
+    void clearCompleted();
+  }, [clearCompleted]);
+
   return (
     <main className="relative w-full min-h-screen bg-gray-100">
-      <div className="fixed inset-0 flex items-center justify-center p-3">
-        <div className="w-full max-w-122.5 sm:max-w-120 md:max-w-160 lg:max-w-3xl">
-          <Card className="w-full max-h-[calc(100dvh-1.5rem)] overflow-hidden p-4">
-            <TaskInput onSubmit={handleAddTask} />
+      <div className={PAGE_SHELL_CLASS_NAME}>
+        <div className={PAGE_CONTENT_WIDTH_CLASS_NAME}>
+          <Card className={TASK_CARD_CLASS_NAME}>
+            <TaskInput onCreateTask={handleCreateTask} />
 
             <Separator />
 
@@ -53,9 +64,9 @@ const Home = () => {
 
             <TaskList
               tasks={filteredTasks}
-              onToggle={toggleTaskDone}
-              onEdit={handleEditTask}
-              onDelete={deleteTask}
+              onToggleTaskStatus={toggleTaskDone}
+              onSaveTask={handleSaveTask}
+              onDeleteTask={deleteTask}
             />
 
             <TaskStats
@@ -64,9 +75,7 @@ const Home = () => {
               openTasks={openTasks}
               completedTasks={completedTasks}
               completionPercentage={completionPercentage}
-              onClearCompleted={() => {
-                void clearCompleted();
-              }}
+              onClearCompletedTasks={handleClearCompletedTasks}
             />
           </Card>
         </div>
@@ -75,4 +84,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default HomePage;

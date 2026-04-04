@@ -1,5 +1,18 @@
 import prisma from "@/lib/prisma";
 
+const orderTasksByName = {
+  task: "asc",
+} as const;
+
+const createTaskNameInsensitiveWhere = (taskName: string) => {
+  return {
+    task: {
+      equals: taskName,
+      mode: "insensitive" as const,
+    },
+  };
+};
+
 export const findTaskById = (id: string) => {
   return prisma.tasks.findUnique({
     where: { id },
@@ -8,12 +21,7 @@ export const findTaskById = (id: string) => {
 
 export const findTaskByNameInsensitive = (taskName: string) => {
   return prisma.tasks.findFirst({
-    where: {
-      task: {
-        equals: taskName,
-        mode: "insensitive",
-      },
-    },
+    where: createTaskNameInsensitiveWhere(taskName),
   });
 };
 
@@ -28,9 +36,7 @@ export const createTaskRecord = (taskName: string) => {
 
 export const listTasks = () => {
   return prisma.tasks.findMany({
-    orderBy: {
-      task: "asc",
-    },
+    orderBy: orderTasksByName,
   });
 };
 
@@ -42,12 +48,7 @@ export const deleteTaskById = (id: string) => {
 
 export const deleteTasksByNameInsensitive = (taskName: string) => {
   return prisma.tasks.deleteMany({
-    where: {
-      task: {
-        equals: taskName,
-        mode: "insensitive",
-      },
-    },
+    where: createTaskNameInsensitiveWhere(taskName),
   });
 };
 

@@ -1,52 +1,43 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Tasks } from "@prisma/client";
-import { getTasks } from "@/actions/get-tasks";
-import { createTaskAction } from "@/actions/create-task";
-import { clearCompletedTasksAction } from "@/actions/clear-completed-tasks";
-import { deleteTaskAction } from "@/actions/delete-task";
-import { toggleTaskStatus } from "@/actions/toggle-task-status";
-import { updateTaskAction } from "@/actions/update-task";
-import { MAX_TASK_LENGTH } from "@/features/tasks/constants";
-import { CreateTasksResult, TaskFilter } from "@/features/tasks/types";
+import {
+  clearCompletedTasksAction,
+  createTasksAction,
+  deleteTaskAction,
+  fetchTasksAction,
+  toggleTaskDoneStatusAction,
+  updateTaskNameAction,
+} from "@/actions/tasks";
+import { isTaskError, TaskErrorCode } from "@/features/tasks/errors";
+import {
+  appendTasksToList,
+  calculateCompletionPercentage,
+  countCompletedTasks,
+  filterTasksByStatus,
+  mergeTaskListSnapshot,
+  removeCompletedTasksFromList,
+  removeTaskFromList,
+  replaceTaskInList,
+} from "@/features/tasks/hooks/useTasks.helpers";
+import { taskMessages } from "@/features/tasks/messages";
+import { TaskFilter, TaskRecord } from "@/features/tasks/types";
+import { validateTaskName } from "@/features/tasks/validators";
 import { toast } from "sonner";
 
-const buildBatchCreationMessage = ({
-  createdTasks,
-  duplicateTasks,
-  invalidTasks,
-}: CreateTasksResult) => {
-  const messages: string[] = [];
+const TASK_EVENTS_ENDPOINT = "/api/tasks/events";
 
-  if (createdTasks.length > 0) {
-    messages.push(
-      `${createdTasks.length} tarefa${createdTasks.length > 1 ? "s" : ""} cadastrada${createdTasks.length > 1 ? "s" : ""}.`,
-    );
-  }
-
-  if (duplicateTasks.length > 0) {
-    messages.push(
-      `${duplicateTasks.length} duplicada${duplicateTasks.length > 1 ? "s" : ""} ignorada${duplicateTasks.length > 1 ? "s" : ""}.`,
-    );
-  }
-
-  if (invalidTasks.length > 0) {
-    messages.push(
-      `${invalidTasks.length} com mais de ${MAX_TASK_LENGTH} caracteres ignorada${invalidTasks.length > 1 ? "s" : ""}.`,
-    );
-  }
-
-  return messages.join(" ");
+const logTaskError = (message: string, error: unknown) => {
+  console.error(message, error);
 };
 
 export const useTasks = () => {
-  const [taskList, setTaskList] = useState<Tasks[]>([]);
+  const [taskList, setTaskList] = useState<TaskRecord[]>([]);
   const [activeFilter, setActiveFilter] = useState<TaskFilter>("all");
 
   const totalTasks = useMemo(() => taskList.length, [taskList]);
   const completedTasks = useMemo(
-    () => taskList.filter((item) => item.done).length,
+    () => countCompletedTasks(taskList),
     [taskList],
   );
   const openTasks = useMemo(
@@ -54,90 +45,73 @@ export const useTasks = () => {
     [totalTasks, completedTasks],
   );
   const completionPercentage = useMemo(
-    () =>
-      totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100),
+    () => calculateCompletionPercentage(totalTasks, completedTasks),
     [totalTasks, completedTasks],
   );
   const filteredTasks = useMemo(
-    () =>
-      taskList.filter((item) => {
-        if (activeFilter === "done") return item.done;
-        if (activeFilter === "open") return !item.done;
-        return true;
-      }),
+    () => filterTasksByStatus(taskList, activeFilter),
     [taskList, activeFilter],
   );
 
-  const buildTaskSignature = useCallback((tasks: Tasks[]) => {
-    return tasks
-      .map((item) => `${item.id}:${item.task}:${item.done}`)
-      .join("|");
-  }, []);
-
   const syncTasks = useCallback(async () => {
     try {
-      const tasks = await getTasks();
+      const tasks = await fetchTasksAction();
       if (!tasks) return;
 
-      setTaskList((prev) => {
-        const hasChanged =
-          buildTaskSignature(prev) !== buildTaskSignature(tasks);
-
-        return hasChanged ? tasks : prev;
-      });
+      setTaskList((previousTasks) =>
+        mergeTaskListSnapshot(previousTasks, tasks),
+      );
     } catch (error) {
-      console.error("Erro ao sincronizar tarefas:", error);
+      logTaskError(taskMessages.sync.failed, error);
     }
-  }, [buildTaskSignature]);
+  }, []);
 
   const createTask = useCallback(async (taskName: string) => {
     try {
-      const normalizedTask = taskName.trim();
+      const normalizedTask = validateTaskName(taskName);
 
-      if (!normalizedTask) {
-        toast.error("Por favor, preencha o campo da tarefa!");
-        return false;
-      }
-
-      const creationResult = await createTaskAction(normalizedTask);
+      const creationResult = await createTasksAction(normalizedTask);
 
       if (creationResult.createdTasks.length === 0) {
         if (creationResult.duplicateTasks.length > 0) {
-          toast.error("Todas as tarefas informadas ja existem na lista.");
+          toast.error(taskMessages.create.allDuplicates);
           return false;
         }
 
         if (creationResult.invalidTasks.length > 0) {
-          toast.error(
-            `Cada tarefa deve ter no maximo ${MAX_TASK_LENGTH} caracteres.`,
-          );
+          toast.error(taskMessages.validation.batchMaxLength);
           return false;
         }
 
-        toast.error("Nao foi possivel cadastrar a tarefa.");
+        toast.error(taskMessages.create.failed);
         return false;
       }
 
-      setTaskList((prev) => [...prev, ...creationResult.createdTasks]);
+      setTaskList((previousTasks) =>
+        appendTasksToList(previousTasks, creationResult.createdTasks),
+      );
 
       if (
         creationResult.duplicateTasks.length > 0 ||
         creationResult.invalidTasks.length > 0
       ) {
-        toast.warning(buildBatchCreationMessage(creationResult));
+        toast.warning(taskMessages.create.batchSummary(creationResult));
       }
 
       return true;
     } catch (error) {
-      if (error instanceof Error && error.message === "TASK_NAME_TOO_LONG") {
-        toast.error(
-          `A tarefa deve ter no maximo ${MAX_TASK_LENGTH} caracteres.`,
-        );
+      if (isTaskError(error, TaskErrorCode.NameRequired)) {
+        toast.error(taskMessages.validation.required);
         return false;
       }
 
-      console.error("Erro ao adicionar tarefa:", error);
-      toast.error("Nao foi possivel cadastrar a tarefa.");
+      if (isTaskError(error, TaskErrorCode.NameTooLong)) {
+        toast.error(taskMessages.validation.maxLength);
+        return false;
+      }
+
+      logTaskError("Erro ao adicionar tarefa:", error);
+      toast.error(taskMessages.create.failed);
       return false;
     }
   }, []);
@@ -148,22 +122,18 @@ export const useTasks = () => {
     try {
       const deletedTask = await deleteTaskAction(id, taskName);
       if (deletedTask) {
-        setTaskList((prev) =>
-          prev.filter(
-            (task) =>
-              task.id !== id &&
-              task.task.toLowerCase() !== taskName.toLowerCase(),
-          ),
+        setTaskList((previousTasks) =>
+          removeTaskFromList(previousTasks, id, taskName),
         );
-        toast.success("Tarefa deletada com sucesso!");
+        toast.success(taskMessages.delete.success);
         return true;
       }
 
-      toast.error("Nao foi possivel deletar essa tarefa.");
+      toast.error(taskMessages.delete.failed);
       return false;
     } catch (error) {
-      console.error("Erro ao deletar tarefa:", error);
-      toast.error("Erro ao deletar tarefa.");
+      logTaskError("Erro ao deletar tarefa:", error);
+      toast.error(taskMessages.delete.genericError);
       return false;
     }
   }, []);
@@ -172,27 +142,20 @@ export const useTasks = () => {
     if (!id) return false;
 
     try {
-      const updatedTask = await toggleTaskStatus(id);
+      const updatedTask = await toggleTaskDoneStatusAction(id);
 
       if (!updatedTask) {
-        toast.error("Nao foi possivel atualizar a tarefa.");
+        toast.error(taskMessages.update.statusFailed);
         return false;
       }
 
-      setTaskList((prev) =>
-        prev.map((item) =>
-          item.id === updatedTask.id
-            ? {
-                ...item,
-                done: updatedTask.done,
-              }
-            : item,
-        ),
+      setTaskList((previousTasks) =>
+        replaceTaskInList(previousTasks, updatedTask),
       );
       return true;
     } catch (error) {
-      console.error("Erro ao atualizar status da tarefa:", error);
-      toast.error("Erro ao atualizar status da tarefa.");
+      logTaskError("Erro ao atualizar status da tarefa:", error);
+      toast.error(taskMessages.update.statusFailed);
       return false;
     }
   }, []);
@@ -200,46 +163,43 @@ export const useTasks = () => {
   const editTask = useCallback(async (id: string, taskName: string) => {
     if (!id) return false;
 
-    const normalizedTask = taskName.trim();
-
-    if (!normalizedTask) {
-      toast.error("Por favor, preencha o campo da tarefa!");
-      return false;
-    }
-
     try {
-      const updatedTask = await updateTaskAction(id, normalizedTask);
+      const normalizedTask = validateTaskName(taskName);
+      const updatedTask = await updateTaskNameAction(id, normalizedTask);
 
       if (!updatedTask) {
-        toast.error("Nao foi possivel atualizar a tarefa.");
+        toast.error(taskMessages.update.failed);
         return false;
       }
 
-      setTaskList((prev) =>
-        prev.map((item) => (item.id === updatedTask.id ? updatedTask : item)),
+      setTaskList((previousTasks) =>
+        replaceTaskInList(previousTasks, updatedTask),
       );
-      toast.success("Tarefa editada com sucesso!");
+      toast.success(taskMessages.update.success);
       return true;
     } catch (error) {
-      if (error instanceof Error && error.message === "DUPLICATE_TASK") {
-        toast.error("Essa tarefa ja existe na lista.");
+      if (isTaskError(error, TaskErrorCode.NameRequired)) {
+        toast.error(taskMessages.validation.required);
         return false;
       }
 
-      if (error instanceof Error && error.message === "TASK_NAME_TOO_LONG") {
-        toast.error(
-          `A tarefa deve ter no maximo ${MAX_TASK_LENGTH} caracteres.`,
-        );
+      if (isTaskError(error, TaskErrorCode.DuplicateTask)) {
+        toast.error(taskMessages.update.duplicate);
         return false;
       }
 
-      if (error instanceof Error && error.message === "TASK_NOT_FOUND") {
-        toast.error("A tarefa informada nao foi encontrada.");
+      if (isTaskError(error, TaskErrorCode.NameTooLong)) {
+        toast.error(taskMessages.validation.maxLength);
         return false;
       }
 
-      console.error("Erro ao editar tarefa:", error);
-      toast.error("Nao foi possivel atualizar a tarefa.");
+      if (isTaskError(error, TaskErrorCode.TaskNotFound)) {
+        toast.error(taskMessages.update.notFound);
+        return false;
+      }
+
+      logTaskError("Erro ao editar tarefa:", error);
+      toast.error(taskMessages.update.failed);
       return false;
     }
   }, []);
@@ -251,29 +211,28 @@ export const useTasks = () => {
       const removedCount = await clearCompletedTasksAction();
 
       if (removedCount === 0) {
-        toast.error("Nao ha tarefas concluidas para limpar.");
+        toast.error(taskMessages.clearCompleted.empty);
         return false;
       }
 
-      setTaskList((prev) => prev.filter((task) => !task.done));
-      toast.success(
-        `${removedCount} tarefa${removedCount > 1 ? "s" : ""} concluida${removedCount > 1 ? "s" : ""} removida${removedCount > 1 ? "s" : ""}.`,
+      setTaskList((previousTasks) =>
+        removeCompletedTasksFromList(previousTasks),
       );
+      toast.success(taskMessages.clearCompleted.success(removedCount));
       return true;
     } catch (error) {
-      console.error("Erro ao limpar tarefas concluidas:", error);
-      toast.error("Nao foi possivel limpar as tarefas concluidas.");
+      logTaskError("Erro ao limpar tarefas concluidas:", error);
+      toast.error(taskMessages.clearCompleted.failed);
       return false;
     }
   }, [completedTasks]);
 
-  // SSE subscription
   useEffect(() => {
     const initialSyncTimeout = setTimeout(() => {
       void syncTasks();
     }, 0);
 
-    const eventSource = new EventSource("/api/tasks/events");
+    const eventSource = new EventSource(TASK_EVENTS_ENDPOINT);
 
     const onTasksUpdated = () => {
       void syncTasks();
@@ -282,7 +241,7 @@ export const useTasks = () => {
     eventSource.addEventListener("tasks-updated", onTasksUpdated);
 
     eventSource.onerror = () => {
-      console.error("Conexão SSE indisponível. Tentando reconectar...");
+      console.error(taskMessages.sync.sseUnavailable);
     };
 
     return () => {

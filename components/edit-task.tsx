@@ -1,43 +1,45 @@
 "use client";
 
 import { KeyboardEvent, useEffect, useState } from "react";
+import { SquarePen } from "lucide-react";
+import { MAX_TASK_LENGTH } from "@/features/tasks/constants";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "./ui/dialog";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
-import { SquarePen } from "lucide-react";
-import { MAX_TASK_LENGTH } from "@/features/tasks/constants";
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 interface EditTaskProps {
   taskId: string;
   taskName: string;
-  onSubmit: (id: string, value: string) => Promise<boolean> | boolean;
+  onSaveTask: (id: string, taskName: string) => Promise<boolean> | boolean;
 }
 
-const EditTask = ({ taskId, taskName, onSubmit }: EditTaskProps) => {
-  const [open, setOpen] = useState(false);
-  const [value, setValue] = useState(taskName);
+const EditTask = ({ taskId, taskName, onSaveTask }: EditTaskProps) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editedTaskName, setEditedTaskName] = useState(taskName);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (open) {
-      setValue(taskName);
+    if (isDialogOpen) {
+      setEditedTaskName(taskName);
     }
-  }, [open, taskName]);
+  }, [isDialogOpen, taskName]);
+
+  const isSaveDisabled = editedTaskName.trim().length === 0 || isSubmitting;
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
 
     try {
-      const success = await onSubmit(taskId, value);
+      const success = await onSaveTask(taskId, editedTaskName);
 
       if (success) {
-        setOpen(false);
+        setIsDialogOpen(false);
       }
     } finally {
       setIsSubmitting(false);
@@ -45,14 +47,14 @@ const EditTask = ({ taskId, taskName, onSubmit }: EditTaskProps) => {
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter" && !isSubmitting) {
+    if (event.key === "Enter" && !isSaveDisabled) {
       event.preventDefault();
       void handleSubmit();
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
         <button type="button" aria-label={`Editar ${taskName}`}>
           <SquarePen size={16} className="cursor-pointer text-blue-500" />
@@ -67,8 +69,8 @@ const EditTask = ({ taskId, taskName, onSubmit }: EditTaskProps) => {
         <div className="flex gap-2">
           <Input
             placeholder="Editar tarefa..."
-            value={value}
-            onChange={(event) => setValue(event.target.value)}
+            value={editedTaskName}
+            onChange={(event) => setEditedTaskName(event.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isSubmitting}
             maxLength={MAX_TASK_LENGTH}
@@ -78,7 +80,7 @@ const EditTask = ({ taskId, taskName, onSubmit }: EditTaskProps) => {
             type="button"
             className="cursor-pointer"
             onClick={() => void handleSubmit()}
-            disabled={value.trim().length === 0 || isSubmitting}
+            disabled={isSaveDisabled}
           >
             Editar
           </Button>

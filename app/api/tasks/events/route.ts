@@ -4,6 +4,13 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const encoder = new TextEncoder();
+const HEARTBEAT_INTERVAL_IN_MS = 25000;
+const SSE_HEADERS = {
+  "Content-Type": "text/event-stream",
+  "Cache-Control": "no-cache, no-transform",
+  Connection: "keep-alive",
+  "X-Accel-Buffering": "no",
+} as const;
 
 const formatEvent = (
   event: string,
@@ -15,26 +22,38 @@ const formatEvent = (
 export async function GET(request: Request) {
   const stream = new ReadableStream({
     start(controller) {
-      const send = (
+      let isConnectionClosed = false;
+
+      const sendEvent = (
         event: string,
         payload: Record<string, number | string>,
       ) => {
+        if (isConnectionClosed) {
+          return;
+        }
+
         controller.enqueue(encoder.encode(formatEvent(event, payload)));
       };
 
-      send("connected", { timestamp: Date.now() });
+      sendEvent("connected", { timestamp: Date.now() });
 
       const unsubscribe = subscribeTaskUpdates(() => {
-        send("tasks-updated", { timestamp: Date.now() });
+        sendEvent("tasks-updated", { timestamp: Date.now() });
       });
 
       const heartbeat = setInterval(() => {
-        send("ping", { timestamp: Date.now() });
-      }, 25000);
+        sendEvent("ping", { timestamp: Date.now() });
+      }, HEARTBEAT_INTERVAL_IN_MS);
 
       const closeConnection = () => {
+        if (isConnectionClosed) {
+          return;
+        }
+
+        isConnectionClosed = true;
         clearInterval(heartbeat);
         unsubscribe();
+        request.signal.removeEventListener("abort", closeConnection);
         controller.close();
       };
 
@@ -43,11 +62,6 @@ export async function GET(request: Request) {
   });
 
   return new Response(stream, {
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
-      "X-Accel-Buffering": "no",
-    },
+    headers: SSE_HEADERS,
   });
 }

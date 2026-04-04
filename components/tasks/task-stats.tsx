@@ -11,8 +11,25 @@ interface TaskStatsProps {
   openTasks: number;
   completedTasks: number;
   completionPercentage: number;
-  onClearCompleted: () => void;
+  onClearCompletedTasks: () => void;
 }
+
+const getFilterSummaryLabel = (
+  activeFilter: TaskFilter,
+  totalTasks: number,
+  openTasks: number,
+  completedTasks: number,
+) => {
+  if (activeFilter === "open") {
+    return `Nao finalizadas ${openTasks} / ${totalTasks}`;
+  }
+
+  if (activeFilter === "done") {
+    return `Concluidas ${completedTasks} / ${totalTasks}`;
+  }
+
+  return `Todos ${totalTasks} / ${totalTasks}`;
+};
 
 export const TaskStats = memo(
   ({
@@ -21,26 +38,27 @@ export const TaskStats = memo(
     openTasks,
     completedTasks,
     completionPercentage,
-    onClearCompleted,
+    onClearCompletedTasks,
   }: TaskStatsProps) => {
+    const filterSummaryLabel = getFilterSummaryLabel(
+      activeFilter,
+      totalTasks,
+      openTasks,
+      completedTasks,
+    );
+
     return (
       <>
         <div className="flex justify-between items-center mt-4">
           <div className="flex gap-2 items-center mt-2">
             <ListCheck size={16} className="text-blue-500 mb-2" />
-            <p className="text-xs mb-2">
-              {activeFilter === "open" &&
-                `Não finalizadas ${openTasks} / ${totalTasks}`}
-              {activeFilter === "done" &&
-                `Concluídas ${completedTasks} / ${totalTasks}`}
-              {activeFilter === "all" && `Todos ${totalTasks} / ${totalTasks}`}
-            </p>
+            <p className="text-xs mb-2">{filterSummaryLabel}</p>
           </div>
 
           <Button
             className="text-red-500 w-38 h-7 cursor-pointer"
             variant="outline"
-            onClick={onClearCompleted}
+            onClick={onClearCompletedTasks}
             disabled={completedTasks === 0}
           >
             <Trash2 size={16} />

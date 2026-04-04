@@ -1,28 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { KeyboardEvent, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ListTodo, Plus } from "lucide-react";
+import { MAX_TASK_LENGTH } from "@/features/tasks/constants";
 
 interface TaskInputProps {
-  onSubmit: (value: string) => Promise<boolean> | boolean;
+  onCreateTask: (taskName: string) => Promise<boolean> | boolean;
   isDisabled?: boolean;
 }
 
-export const TaskInput = ({ onSubmit, isDisabled = false }: TaskInputProps) => {
-  const [value, setValue] = useState("");
+const TASK_INPUT_PLACEHOLDER = "Adicionar tarefa ou varias...";
+const TASK_INPUT_HELPER_TEXT =
+  "Separe varias tarefas com virgula para cadastrar tudo de uma vez.";
+
+export const TaskInput = ({
+  onCreateTask,
+  isDisabled = false,
+}: TaskInputProps) => {
+  const [taskNameInput, setTaskNameInput] = useState("");
+
+  const isSubmitDisabled = useMemo(() => {
+    return taskNameInput.trim().length === 0 || isDisabled;
+  }, [isDisabled, taskNameInput]);
 
   const handleSubmit = async () => {
-    const success = await onSubmit(value);
+    const success = await onCreateTask(taskNameInput);
 
     if (success) {
-      setValue("");
+      setTaskNameInput("");
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && !isDisabled) {
+  const handleInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter" && !isSubmitDisabled) {
       void handleSubmit();
     }
   };
@@ -32,31 +44,29 @@ export const TaskInput = ({ onSubmit, isDisabled = false }: TaskInputProps) => {
       <div className="mb-8 flex items-center gap-2 text-blue-500">
         <ListTodo className="size-7" />
         <h1 className="text-2xl font-bold">Lista de Tarefas</h1>
-      
       </div>
 
       <div className="flex gap-2">
         <Input
-          placeholder="Adicionar tarefa ou varias..."
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={handleKeyDown}
+          placeholder={TASK_INPUT_PLACEHOLDER}
+          value={taskNameInput}
+          onChange={(event) => setTaskNameInput(event.target.value)}
+          onKeyDown={handleInputKeyDown}
           disabled={isDisabled}
+          maxLength={MAX_TASK_LENGTH * 5}
           className="focus:outline-none focus:ring-0 focus-visible:ring-0 focus:border-transparent"
         />
         <Button
           className="cursor-pointer"
           variant="default"
           onClick={() => void handleSubmit()}
-          disabled={value.trim().length === 0 || isDisabled}
+          disabled={isSubmitDisabled}
         >
           <Plus />
           Cadastrar
         </Button>
       </div>
-      <p className="text-xs text-muted-foreground">
-        Separe varias tarefas com virgula para cadastrar tudo de uma vez.
-      </p>
+      <p className="text-xs text-muted-foreground">{TASK_INPUT_HELPER_TEXT}</p>
     </div>
   );
 };

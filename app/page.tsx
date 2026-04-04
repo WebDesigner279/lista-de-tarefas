@@ -1,7 +1,7 @@
-// ✅ /app/page.tsx
+import { redirect } from "next/navigation";
 
-import { redirect } from "next/navigation"
+const DEFAULT_HOME_ROUTE = "/home";
 
 export default function Page() {
-  redirect("/home")
+  redirect(DEFAULT_HOME_ROUTE);
 }
