@@ -1,4 +1,3 @@
-import { publishTaskUpdate } from "@/lib/task-events";
 import {
   createTaskRecord,
   deleteCompletedTasks,
@@ -6,6 +5,7 @@ import {
   deleteTasksByNameInsensitive,
   findTaskById,
   findTaskByNameInsensitive,
+  findTasksByNamesInsensitive,
   listTasks,
   updateTaskDoneStatus,
   updateTaskNameById,
@@ -17,7 +17,7 @@ import {
   splitTaskNames,
   validateTaskName,
 } from "@/features/tasks/validators";
-import { CreateTaskBatchResult, TaskRecord } from "@/features/tasks/types";
+import { CreateTaskBatchResult } from "@/features/tasks/types";
 
 const ensureTaskDoesNotExist = async (
   taskName: string,
@@ -75,21 +75,24 @@ const createUniqueTasks = async (
   taskNames: string[],
   duplicateTasks: string[],
 ) => {
-  const createdTasks: TaskRecord[] = [];
+  const existingTasks = await findTasksByNamesInsensitive(taskNames);
+  const existingTaskKeys = new Set(
+    existingTasks.map((task) => createTaskLookupKey(task.task)),
+  );
+  const taskNamesToCreate = taskNames.filter((taskName) => {
+    const taskLookupKey = createTaskLookupKey(taskName);
 
-  for (const taskName of taskNames) {
-    const duplicatedTask = await findTaskByNameInsensitive(taskName);
-
-    if (duplicatedTask) {
+    if (existingTaskKeys.has(taskLookupKey)) {
       duplicateTasks.push(taskName);
-      continue;
+      return false;
     }
 
-    const createdTask = await createTaskRecord(taskName);
-    createdTasks.push(createdTask);
-  }
+    return true;
+  });
 
-  return createdTasks;
+  return Promise.all(
+    taskNamesToCreate.map((taskName) => createTaskRecord(taskName)),
+  );
 };
 
 export const createTask = async (taskName: string) => {
@@ -97,10 +100,7 @@ export const createTask = async (taskName: string) => {
 
   await ensureTaskDoesNotExist(normalizedTaskName);
 
-  const newTask = await createTaskRecord(normalizedTaskName);
-  publishTaskUpdate();
-
-  return newTask;
+  return createTaskRecord(normalizedTaskName);
 };
 
 export const createTasks = async (
@@ -110,10 +110,6 @@ export const createTasks = async (
     collectTaskCreationCandidates(taskNameInput);
 
   const createdTasks = await createUniqueTasks(validTaskNames, duplicateTasks);
-
-  if (createdTasks.length > 0) {
-    publishTaskUpdate();
-  }
 
   return {
     createdTasks,
@@ -132,7 +128,6 @@ export const removeTask = async (id: string, taskName?: string) => {
   if (id) {
     try {
       await deleteTaskById(id);
-      publishTaskUpdate();
       return true;
     } catch {
       // Fallback para o nome se o id nao existir mais.
@@ -147,7 +142,6 @@ export const removeTask = async (id: string, taskName?: string) => {
   const result = await deleteTasksByNameInsensitive(normalizedTask);
   if (result.count === 0) return false;
 
-  publishTaskUpdate();
   return true;
 };
 
@@ -157,10 +151,7 @@ export const toggleTaskDoneStatus = async (id: string) => {
   const currentTask = await findTaskById(id);
   if (!currentTask) return null;
 
-  const updatedTask = await updateTaskDoneStatus(id, !currentTask.done);
-  publishTaskUpdate();
-
-  return updatedTask;
+  return updateTaskDoneStatus(id, !currentTask.done);
 };
 
 export const updateTaskName = async (id: string, taskName: string) => {
@@ -182,18 +173,11 @@ export const updateTaskName = async (id: string, taskName: string) => {
 
   await ensureTaskDoesNotExist(normalizedTask, id);
 
-  const updatedTask = await updateTaskNameById(id, normalizedTask);
-  publishTaskUpdate();
-
-  return updatedTask;
+  return updateTaskNameById(id, normalizedTask);
 };
 
 export const clearCompletedTasks = async () => {
   const result = await deleteCompletedTasks();
-
-  if (result.count > 0) {
-    publishTaskUpdate();
-  }
 
   return result.count;
 };

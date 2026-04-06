@@ -25,6 +25,18 @@ export const findTaskByNameInsensitive = (taskName: string) => {
   });
 };
 
+export const findTasksByNamesInsensitive = (taskNames: string[]) => {
+  if (taskNames.length === 0) {
+    return Promise.resolve([]);
+  }
+
+  return prisma.tasks.findMany({
+    where: {
+      OR: taskNames.map(createTaskNameInsensitiveWhere),
+    },
+  });
+};
+
 export const createTaskRecord = (taskName: string) => {
   return prisma.tasks.create({
     data: {

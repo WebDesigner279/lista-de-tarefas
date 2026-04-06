@@ -64,6 +64,5 @@ export const taskMessages = {
   },
   sync: {
     failed: "Erro ao sincronizar tarefas:",
-    sseUnavailable: "Conexao SSE indisponivel. Tentando reconectar...",
   },
 } as const;

@@ -1,26 +1,32 @@
 "use client";
 
 import { KeyboardEvent, useEffect, useState } from "react";
-import { SquarePen } from "lucide-react";
 import { MAX_TASK_LENGTH } from "@/features/tasks/constants";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
 interface EditTaskProps {
-  taskId: string;
+  taskId: string | null;
   taskName: string;
+  isDialogOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
   onSaveTask: (id: string, taskName: string) => Promise<boolean> | boolean;
 }
 
-const EditTask = ({ taskId, taskName, onSaveTask }: EditTaskProps) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+const EditTask = ({
+  taskId,
+  taskName,
+  isDialogOpen,
+  onOpenChange,
+  onSaveTask,
+}: EditTaskProps) => {
   const [editedTaskName, setEditedTaskName] = useState(taskName);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -33,13 +39,17 @@ const EditTask = ({ taskId, taskName, onSaveTask }: EditTaskProps) => {
   const isSaveDisabled = editedTaskName.trim().length === 0 || isSubmitting;
 
   const handleSubmit = async () => {
+    if (!taskId) {
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       const success = await onSaveTask(taskId, editedTaskName);
 
       if (success) {
-        setIsDialogOpen(false);
+        onOpenChange(false);
       }
     } finally {
       setIsSubmitting(false);
@@ -54,16 +64,13 @@ const EditTask = ({ taskId, taskName, onSaveTask }: EditTaskProps) => {
   };
 
   return (
-    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogTrigger asChild>
-        <button type="button" aria-label={`Editar ${taskName}`}>
-          <SquarePen size={16} className="cursor-pointer text-blue-500" />
-        </button>
-      </DialogTrigger>
-
-      <DialogContent>
+    <Dialog open={isDialogOpen} onOpenChange={onOpenChange}>
+      <DialogContent forceMount className="duration-0">
         <DialogHeader>
           <DialogTitle>Editar tarefa</DialogTitle>
+          <DialogDescription className="sr-only">
+            Atualize o nome da tarefa selecionada.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex gap-2">
