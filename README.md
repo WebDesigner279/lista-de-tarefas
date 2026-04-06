@@ -74,3 +74,26 @@ Exemplo: `http://192.168.18.111:3000`
 - O schema atual está em `prisma/schema.prisma`.
 - Para um banco novo, mantenha migrations versionadas em `prisma/migrations`.
 - Se o banco atual foi criado manualmente, faça um baseline das migrations antes de depender de `prisma migrate deploy` em produção.
+
+## Fluxo recomendado com Neon
+
+### Alteracoes normais de codigo
+
+1. Mantenha a `DATABASE_URL` de `.env.local` apontando para o Neon.
+2. Rode `npm run dev`.
+3. Teste normalmente a aplicacao.
+
+### Alteracoes de schema Prisma
+
+1. Edite `prisma/schema.prisma`.
+2. Gere a migration localmente com `npx prisma migrate dev --name nome-da-mudanca`.
+3. Revise os arquivos criados em `prisma/migrations`.
+4. Rode `npm run test` e `npm run build`.
+5. Commit as mudancas de schema e migration.
+6. Aplique no banco remoto com `npm run db:migrate:deploy` quando quiser atualizar o banco usado pelo projeto.
+
+### O que evitar
+
+- Evite usar `npx prisma db push` como fluxo padrao deste projeto.
+- Evite comandos destrutivos como reset no banco remoto.
+- Evite alterar o banco remoto manualmente sem registrar migration no repositorio.
