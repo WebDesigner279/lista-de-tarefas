@@ -1,7 +1,14 @@
 import { redirect } from "next/navigation";
+import { getCurrentUser, hasRegisteredUsers } from "@/lib/auth";
 
-const DEFAULT_HOME_ROUTE = "/home";
+export default async function Page() {
+  const user = await getCurrentUser();
 
-export default function Page() {
-  redirect(DEFAULT_HOME_ROUTE);
+  if (user) {
+    redirect("/dashboard");
+  }
+
+  const hasUsers = await hasRegisteredUsers();
+
+  redirect(hasUsers ? "/login" : "/cadastro");
 }

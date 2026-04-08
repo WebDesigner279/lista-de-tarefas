@@ -37,6 +37,8 @@ import {
   updateTaskName,
 } from "@/features/tasks/service";
 
+const USER_ID = "user-1";
+
 const buildTask = (overrides: Partial<TaskRecord> = {}): TaskRecord => ({
   id: "task-1",
   task: "Comprar leite",
@@ -53,17 +55,20 @@ describe("service", () => {
     vi.mocked(findTaskByNameInsensitive).mockResolvedValue(null);
     vi.mocked(createTaskRecord).mockResolvedValue(buildTask());
 
-    const createdTask = await createTask("  Comprar leite  ");
+    const createdTask = await createTask(USER_ID, "  Comprar leite  ");
 
-    expect(findTaskByNameInsensitive).toHaveBeenCalledWith("Comprar leite");
-    expect(createTaskRecord).toHaveBeenCalledWith("Comprar leite");
+    expect(findTaskByNameInsensitive).toHaveBeenCalledWith(
+      USER_ID,
+      "Comprar leite",
+    );
+    expect(createTaskRecord).toHaveBeenCalledWith(USER_ID, "Comprar leite");
     expect(createdTask).toEqual(buildTask());
   });
 
   it("impede criar tarefa duplicada", async () => {
     vi.mocked(findTaskByNameInsensitive).mockResolvedValue(buildTask());
 
-    await expect(createTask("Comprar leite")).rejects.toMatchObject({
+    await expect(createTask(USER_ID, "Comprar leite")).rejects.toMatchObject({
       code: TaskErrorCode.DuplicateTask,
     });
 
@@ -79,6 +84,7 @@ describe("service", () => {
     );
 
     const result = await createTasks(
+      USER_ID,
       "Comprar leite, Estudar, comprar leite, " + "x".repeat(35),
     );
 
@@ -92,7 +98,7 @@ describe("service", () => {
   it("nao cria tarefa no lote quando todas sao duplicadas", async () => {
     vi.mocked(findTasksByNamesInsensitive).mockResolvedValue([buildTask()]);
 
-    const result = await createTasks("Comprar leite");
+    const result = await createTasks(USER_ID, "Comprar leite");
 
     expect(result.createdTasks).toEqual([]);
     expect(result.duplicateTasks).toEqual(["Comprar leite"]);
@@ -102,15 +108,17 @@ describe("service", () => {
     const tasks = [buildTask({ id: "1" }), buildTask({ id: "2", done: true })];
     vi.mocked(listTasks).mockResolvedValue(tasks);
 
-    await expect(getAllTasks()).resolves.toEqual(tasks);
-    expect(listTasks).toHaveBeenCalledTimes(1);
+    await expect(getAllTasks(USER_ID)).resolves.toEqual(tasks);
+    expect(listTasks).toHaveBeenCalledWith(USER_ID);
   });
 
   it("remove tarefa por id quando o registro existe", async () => {
-    vi.mocked(deleteTaskById).mockResolvedValue(buildTask());
+    vi.mocked(deleteTaskById).mockResolvedValue({ count: 1 });
 
-    await expect(removeTask("task-1", "Comprar leite")).resolves.toBe(true);
-    expect(deleteTaskById).toHaveBeenCalledWith("task-1");
+    await expect(removeTask(USER_ID, "task-1", "Comprar leite")).resolves.toBe(
+      true,
+    );
+    expect(deleteTaskById).toHaveBeenCalledWith(USER_ID, "task-1");
     expect(deleteTasksByNameInsensitive).not.toHaveBeenCalled();
   });
 
@@ -118,14 +126,19 @@ describe("service", () => {
     vi.mocked(deleteTaskById).mockRejectedValue(new Error("not found"));
     vi.mocked(deleteTasksByNameInsensitive).mockResolvedValue({ count: 1 });
 
-    await expect(removeTask("task-1", "  Comprar leite ")).resolves.toBe(true);
-    expect(deleteTasksByNameInsensitive).toHaveBeenCalledWith("Comprar leite");
+    await expect(
+      removeTask(USER_ID, "task-1", "  Comprar leite "),
+    ).resolves.toBe(true);
+    expect(deleteTasksByNameInsensitive).toHaveBeenCalledWith(
+      USER_ID,
+      "Comprar leite",
+    );
   });
 
   it("retorna falso quando nao consegue remover por nome", async () => {
     vi.mocked(deleteTasksByNameInsensitive).mockResolvedValue({ count: 0 });
 
-    await expect(removeTask("", "Comprar leite")).resolves.toBe(false);
+    await expect(removeTask(USER_ID, "", "Comprar leite")).resolves.toBe(false);
   });
 
   it("alterna o status da tarefa", async () => {
@@ -136,16 +149,17 @@ describe("service", () => {
       buildTask({ id: "task-1", done: true }),
     );
 
-    await expect(toggleTaskDoneStatus("task-1")).resolves.toEqual(
+    await expect(toggleTaskDoneStatus(USER_ID, "task-1")).resolves.toEqual(
       buildTask({ id: "task-1", done: true }),
     );
+    expect(findTaskById).toHaveBeenCalledWith(USER_ID, "task-1");
     expect(updateTaskDoneStatus).toHaveBeenCalledWith("task-1", true);
   });
 
   it("retorna nulo ao tentar alternar status de tarefa inexistente", async () => {
     vi.mocked(findTaskById).mockResolvedValue(null);
 
-    await expect(toggleTaskDoneStatus("task-1")).resolves.toBeNull();
+    await expect(toggleTaskDoneStatus(USER_ID, "task-1")).resolves.toBeNull();
     expect(updateTaskDoneStatus).not.toHaveBeenCalled();
   });
 
@@ -153,9 +167,9 @@ describe("service", () => {
     const currentTask = buildTask({ id: "task-1", task: "Comprar leite" });
     vi.mocked(findTaskById).mockResolvedValue(currentTask);
 
-    await expect(updateTaskName("task-1", "Comprar leite")).resolves.toEqual(
-      currentTask,
-    );
+    await expect(
+      updateTaskName(USER_ID, "task-1", "Comprar leite"),
+    ).resolves.toEqual(currentTask);
     expect(updateTaskNameById).not.toHaveBeenCalled();
   });
 
@@ -165,7 +179,9 @@ describe("service", () => {
       buildTask({ id: "task-2", task: "Estudar" }),
     );
 
-    await expect(updateTaskName("task-1", "Estudar")).rejects.toMatchObject({
+    await expect(
+      updateTaskName(USER_ID, "task-1", "Estudar"),
+    ).rejects.toMatchObject({
       code: TaskErrorCode.DuplicateTask,
     });
 
@@ -181,16 +197,18 @@ describe("service", () => {
       buildTask({ id: "task-1", task: "Estudar Vitest" }),
     );
 
-    await expect(updateTaskName("task-1", "Estudar Vitest")).resolves.toEqual(
-      buildTask({ id: "task-1", task: "Estudar Vitest" }),
-    );
+    await expect(
+      updateTaskName(USER_ID, "task-1", "Estudar Vitest"),
+    ).resolves.toEqual(buildTask({ id: "task-1", task: "Estudar Vitest" }));
     expect(updateTaskNameById).toHaveBeenCalledWith("task-1", "Estudar Vitest");
   });
 
   it("falha com TaskNotFound quando tenta editar sem tarefa atual", async () => {
     vi.mocked(findTaskById).mockResolvedValue(null);
 
-    await expect(updateTaskName("task-1", "Novo nome")).rejects.toMatchObject({
+    await expect(
+      updateTaskName(USER_ID, "task-1", "Novo nome"),
+    ).rejects.toMatchObject({
       code: TaskErrorCode.TaskNotFound,
     });
   });
@@ -200,7 +218,7 @@ describe("service", () => {
       .mockResolvedValueOnce({ count: 2 })
       .mockResolvedValueOnce({ count: 0 });
 
-    await expect(clearCompletedTasks()).resolves.toBe(2);
-    await expect(clearCompletedTasks()).resolves.toBe(0);
+    await expect(clearCompletedTasks(USER_ID)).resolves.toBe(2);
+    await expect(clearCompletedTasks(USER_ID)).resolves.toBe(0);
   });
 });

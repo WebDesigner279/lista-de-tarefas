@@ -3,7 +3,7 @@
 import { KeyboardEvent, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ListTodo, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { MAX_TASK_LENGTH } from "@/features/tasks/constants";
 
 interface TaskInputProps {
@@ -40,12 +40,7 @@ export const TaskInput = ({
   };
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="mb-8 flex items-center gap-2 text-blue-500">
-        <ListTodo className="size-7" />
-        <h1 className="text-2xl font-bold">Lista de Tarefas</h1>
-      </div>
-
+    <div className="flex flex-col gap-3">
       <div className="flex gap-2">
         <Input
           placeholder={TASK_INPUT_PLACEHOLDER}

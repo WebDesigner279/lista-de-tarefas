@@ -1,5 +1,6 @@
 "use server";
 
+import { requireAuthenticatedUser } from "@/lib/auth";
 import {
   clearCompletedTasks,
   createTasks,
@@ -10,25 +11,37 @@ import {
 } from "@/features/tasks/service";
 
 export const fetchTasksAction = async () => {
-  return getAllTasks();
+  const user = await requireAuthenticatedUser();
+
+  return getAllTasks(user.id);
 };
 
 export const createTasksAction = async (taskNameInput: string) => {
-  return createTasks(taskNameInput);
+  const user = await requireAuthenticatedUser();
+
+  return createTasks(user.id, taskNameInput);
 };
 
 export const deleteTaskAction = async (id: string, taskName?: string) => {
-  return removeTask(id, taskName);
+  const user = await requireAuthenticatedUser();
+
+  return removeTask(user.id, id, taskName);
 };
 
 export const toggleTaskDoneStatusAction = async (taskId: string) => {
-  return toggleTaskDoneStatus(taskId);
+  const user = await requireAuthenticatedUser();
+
+  return toggleTaskDoneStatus(user.id, taskId);
 };
 
 export const updateTaskNameAction = async (id: string, taskName: string) => {
-  return updateTaskName(id, taskName);
+  const user = await requireAuthenticatedUser();
+
+  return updateTaskName(user.id, id, taskName);
 };
 
 export const clearCompletedTasksAction = async () => {
-  return clearCompletedTasks();
+  const user = await requireAuthenticatedUser();
+
+  return clearCompletedTasks(user.id);
 };

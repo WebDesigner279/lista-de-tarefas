@@ -1,7 +1,8 @@
-// import { PrismaClient } from "";
-// const prisma = new PrismaClient();
-import "dotenv/config";
+import { config } from "dotenv";
 import { defineConfig } from "prisma/config";
+
+config({ path: ".env.local", override: false });
+config({ override: false });
 
 export default defineConfig({
   schema: "prisma/schema.prisma",

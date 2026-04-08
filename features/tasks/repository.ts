@@ -13,60 +13,76 @@ const createTaskNameInsensitiveWhere = (taskName: string) => {
   };
 };
 
-export const findTaskById = (id: string) => {
-  return prisma.tasks.findUnique({
-    where: { id },
-  });
-};
-
-export const findTaskByNameInsensitive = (taskName: string) => {
+export const findTaskById = (userId: string, id: string) => {
   return prisma.tasks.findFirst({
-    where: createTaskNameInsensitiveWhere(taskName),
+    where: { id, userId },
   });
 };
 
-export const findTasksByNamesInsensitive = (taskNames: string[]) => {
+export const findTaskByNameInsensitive = (userId: string, taskName: string) => {
+  return prisma.tasks.findFirst({
+    where: {
+      userId,
+      ...createTaskNameInsensitiveWhere(taskName),
+    },
+  });
+};
+
+export const findTasksByNamesInsensitive = (
+  userId: string,
+  taskNames: string[],
+) => {
   if (taskNames.length === 0) {
     return Promise.resolve([]);
   }
 
   return prisma.tasks.findMany({
     where: {
+      userId,
       OR: taskNames.map(createTaskNameInsensitiveWhere),
     },
   });
 };
 
-export const createTaskRecord = (taskName: string) => {
+export const createTaskRecord = (userId: string, taskName: string) => {
   return prisma.tasks.create({
     data: {
       task: taskName,
       done: false,
+      userId,
     },
   });
 };
 
-export const listTasks = () => {
+export const listTasks = (userId: string) => {
   return prisma.tasks.findMany({
+    where: { userId },
     orderBy: orderTasksByName,
   });
 };
 
-export const deleteTaskById = (id: string) => {
-  return prisma.tasks.delete({
-    where: { id },
-  });
-};
-
-export const deleteTasksByNameInsensitive = (taskName: string) => {
+export const deleteTaskById = (userId: string, id: string) => {
   return prisma.tasks.deleteMany({
-    where: createTaskNameInsensitiveWhere(taskName),
+    where: { id, userId },
   });
 };
 
-export const deleteCompletedTasks = () => {
+export const deleteTasksByNameInsensitive = (
+  userId: string,
+  taskName: string,
+) => {
   return prisma.tasks.deleteMany({
     where: {
+      userId,
+      ...createTaskNameInsensitiveWhere(taskName),
+    },
+  });
+};
+
+export const deleteCompletedTasks = (userId: string) => {
+  return prisma.tasks.deleteMany({
+    where: {
+      userId,
       done: true,
     },
   });

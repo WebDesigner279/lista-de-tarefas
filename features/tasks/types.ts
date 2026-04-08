@@ -1,6 +1,8 @@
-import { Tasks } from "@prisma/client";
-
-export type TaskRecord = Tasks;
+export interface TaskRecord {
+  id: string;
+  task: string;
+  done: boolean;
+}
 
 export type TaskFilter = "all" | "open" | "done";
 

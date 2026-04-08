@@ -13,11 +13,10 @@ import {
 import { useTasks } from "@/features/tasks/hooks";
 
 const PAGE_SHELL_CLASS_NAME =
-  "fixed inset-0 flex items-center justify-center p-3";
-const PAGE_CONTENT_WIDTH_CLASS_NAME =
-  "w-full max-w-[30.625rem] sm:max-w-[30rem] md:max-w-[40rem] lg:max-w-3xl";
+  "mx-auto flex w-full max-w-6xl justify-center px-3 py-6 sm:px-4 sm:py-8";
+const PAGE_CONTENT_WIDTH_CLASS_NAME = "w-full max-w-4xl";
 const TASK_CARD_CLASS_NAME =
-  "w-full max-h-[calc(100dvh-1.5rem)] overflow-hidden p-4";
+  "w-full overflow-hidden border-white/80 bg-white/90 p-4 shadow-2xl shadow-slate-200/60 backdrop-blur sm:p-5";
 
 interface HomeClientPageProps {
   initialTasks: TaskRecord[];
@@ -54,7 +53,7 @@ const HomeClientPage = ({ initialTasks }: HomeClientPageProps) => {
   }, [clearCompleted]);
 
   return (
-    <main className="relative w-full min-h-screen bg-gray-100">
+    <main className="relative w-full">
       <div className={PAGE_SHELL_CLASS_NAME}>
         <div className={PAGE_CONTENT_WIDTH_CLASS_NAME}>
           <Card className={TASK_CARD_CLASS_NAME}>
