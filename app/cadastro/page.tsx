@@ -14,7 +14,7 @@ export default async function RegisterPage() {
   return (
     <AuthShell
       title="Criar conta"
-      description="Cadastre uma conta individual para separar tarefas, sessao e historico de acesso."
+      description="Crie sua conta para organizar tarefas, acompanhar o progresso e acessar seu painel com seguranca."
       footer={
         <span>
           Ja possui cadastro?{" "}

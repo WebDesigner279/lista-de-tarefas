@@ -58,7 +58,7 @@ export const EmailVerificationPanel = ({
   if (token) {
     return (
       <div className="rounded-2xl border border-border/70 bg-muted/40 px-4 py-4 text-sm text-muted-foreground">
-        {message ?? "Validando seu e-mail..."}
+        {message ?? "Confirmando seu e-mail..."}
       </div>
     );
   }
@@ -69,9 +69,12 @@ export const EmailVerificationPanel = ({
         <div className="flex items-start gap-3">
           <MailCheck className="mt-0.5 size-4 text-primary" />
           <div>
-            <p className="font-medium">Valide o acesso antes de entrar.</p>
+            <p className="font-medium">
+              Confirme seu e-mail antes do primeiro acesso.
+            </p>
             <p className="mt-1 text-muted-foreground">
-              O login so e liberado depois da confirmacao do e-mail cadastrado.
+              Assim que a confirmacao for concluida, sua conta estara pronta
+              para uso.
             </p>
           </div>
         </div>
@@ -89,7 +92,7 @@ export const EmailVerificationPanel = ({
             id="verification-email"
             type="email"
             autoComplete="email"
-            placeholder="voce@empresa.com"
+            placeholder="seuemail@exemplo.com"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />
@@ -114,7 +117,7 @@ export const EmailVerificationPanel = ({
           disabled={isPending}
         >
           <RefreshCcw />
-          {isPending ? "Enviando..." : "Reenviar link de validacao"}
+          {isPending ? "Enviando..." : "Reenviar e-mail de confirmacao"}
         </Button>
       </form>
     </div>

@@ -21,7 +21,7 @@ export default async function DashboardPage() {
   const tasks = await getAllTasks(user.id);
   const completedTasks = tasks.filter((task) => task.done).length;
   const openTasks = tasks.length - completedTasks;
-  const recentTasks = tasks.slice(0, 5);
+  const listedTasks = tasks;
 
   return (
     <ProtectedAppShell>
@@ -87,20 +87,21 @@ export default async function DashboardPage() {
             <CardHeader className="border-b border-border/70 px-6 py-6">
               <CardTitle className="flex items-center gap-3 text-xl">
                 <Clock3 className="size-5 text-primary" />
-                Tarefas recentes
+                Tarefas da lista
               </CardTitle>
               <CardDescription>
-                Amostra das primeiras tarefas ordenadas da sua lista.
+                Lista atual de tarefas usada para compor os indicadores do
+                dashboard.
               </CardDescription>
             </CardHeader>
             <CardContent className="px-6 py-6">
-              {recentTasks.length === 0 ? (
+              {listedTasks.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   Ainda nao existem tarefas cadastradas para exibir aqui.
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {recentTasks.map((task) => (
+                  {listedTasks.map((task) => (
                     <div
                       key={task.id}
                       className="flex items-center justify-between rounded-2xl border border-border/70 bg-background px-4 py-3"

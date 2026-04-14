@@ -21,11 +21,11 @@ const authErrorMessages: Record<AuthErrorCode, string> = {
   [AuthErrorCode.InvalidCredentials]: "E-mail ou senha invalidos.",
   [AuthErrorCode.CurrentPasswordInvalid]: "A senha atual nao confere.",
   [AuthErrorCode.EmailNotVerified]:
-    "Seu e-mail ainda nao foi confirmado. Valide o acesso antes de entrar.",
+    "Seu e-mail ainda nao foi confirmado. Confirme sua conta antes de entrar.",
   [AuthErrorCode.EmailDeliveryUnavailable]:
-    "O envio de e-mails nao esta configurado no ambiente. Defina as variaveis SMTP antes de usar autenticacao por e-mail.",
+    "No momento, nao conseguimos enviar e-mails de confirmacao ou recuperacao. Tente novamente em instantes.",
   [AuthErrorCode.EmailDeliveryFailed]:
-    "Nao foi possivel enviar o e-mail agora. Revise a configuracao SMTP e tente novamente.",
+    "Nao conseguimos enviar o e-mail agora. Tente novamente em instantes.",
   [AuthErrorCode.AuthOperationFailed]:
     "Nao foi possivel concluir a operacao agora.",
   [AuthErrorCode.EmailInUse]: "Ja existe uma conta com esse e-mail.",
@@ -40,9 +40,9 @@ const authErrorMessages: Record<AuthErrorCode, string> = {
   [AuthErrorCode.PasswordConfirmationMismatch]:
     "A confirmacao da senha nao confere.",
   [AuthErrorCode.EmailVerificationTokenRequired]:
-    "O link de validacao nao e valido.",
+    "O link de confirmacao nao e valido.",
   [AuthErrorCode.EmailVerificationTokenInvalid]:
-    "O link de validacao expirou ou ja foi usado.",
+    "O link de confirmacao expirou ou ja foi usado.",
   [AuthErrorCode.ResetTokenRequired]: "O link de redefinicao nao e valido.",
   [AuthErrorCode.ResetTokenInvalid]:
     "O link de redefinicao expirou ou ja foi usado.",
@@ -121,7 +121,7 @@ export const requestPasswordResetAction = async (
     return {
       status: "success",
       message:
-        "Se o e-mail estiver cadastrado, enviamos as instrucoes de redefinicao.",
+        "Se o e-mail estiver cadastrado, enviaremos um link para redefinir sua senha.",
     };
   } catch (error) {
     return buildErrorResult(error);
@@ -138,7 +138,7 @@ export const resetPasswordAction = async (input: {
 
     return {
       status: "success",
-      message: "Senha atualizada com sucesso. Entre com a nova senha.",
+      message: "Sua senha foi atualizada com sucesso. Entre com a nova senha.",
       redirectTo: "/login",
     };
   } catch (error) {
@@ -198,7 +198,7 @@ export const resendEmailVerificationAction = async (
     return {
       status: "success",
       message:
-        "Se existir uma conta pendente para esse e-mail, enviamos um novo link de validacao.",
+        "Se existir uma conta pendente para esse e-mail, enviaremos um novo e-mail de confirmacao.",
       email: result.email,
     };
   } catch (error) {
@@ -214,7 +214,7 @@ export const verifyEmailAction = async (
 
     return {
       status: "success",
-      message: "E-mail confirmado com sucesso.",
+      message: "Seu e-mail foi confirmado com sucesso.",
       redirectTo: "/dashboard",
     };
   } catch (error) {

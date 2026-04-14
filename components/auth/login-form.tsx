@@ -20,11 +20,21 @@ export const LoginForm = () => {
     event.preventDefault();
     setMessage(null);
 
+    const formData = new FormData(event.currentTarget);
+    const submittedEmail = String(formData.get("email") ?? email);
+    const submittedPassword = String(formData.get("password") ?? password);
+
+    setEmail(submittedEmail);
+    setPassword(submittedPassword);
+
     startTransition(async () => {
-      const result = await loginAction({ email, password });
+      const result = await loginAction({
+        email: submittedEmail,
+        password: submittedPassword,
+      });
 
       if (result.status === "error") {
-        setMessage(result.message ?? "Nao foi possivel entrar.");
+        setMessage(result.message ?? "Nao conseguimos entrar na sua conta.");
         return;
       }
 
@@ -44,9 +54,10 @@ export const LoginForm = () => {
         </label>
         <Input
           id="login-email"
+          name="email"
           type="email"
           autoComplete="email"
-          placeholder="voce@empresa.com"
+          placeholder="seuemail@exemplo.com"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
         />
@@ -69,6 +80,7 @@ export const LoginForm = () => {
         </div>
         <PasswordInput
           id="login-password"
+          name="password"
           autoComplete="current-password"
           placeholder="Digite sua senha"
           value={password}
@@ -85,7 +97,7 @@ export const LoginForm = () => {
                 href="/validar-acesso"
                 className="font-medium text-primary hover:text-primary/80"
               >
-                Reenviar link de validacao
+                Reenviar e-mail de confirmacao
               </Link>
             </div>
           ) : null}

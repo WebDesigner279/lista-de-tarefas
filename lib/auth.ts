@@ -134,7 +134,6 @@ export const getCurrentUser = async () => {
 
   if (!session || session.expiresAt <= now) {
     await deleteSessionByTokenHash(createTokenHash(sessionToken));
-    await clearSessionCookie();
     return null;
   }
 

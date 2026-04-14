@@ -25,7 +25,7 @@ export default async function ValidateAccessPage({
   return (
     <AuthShell
       title="Validar acesso"
-      description="Confirme o e-mail da conta para liberar login e acesso ao ambiente protegido."
+      description="Confirme seu e-mail para ativar sua conta e comecar a usar o painel."
       footer={
         <span>
           Ja confirmou o e-mail?{" "}

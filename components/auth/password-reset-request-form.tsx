@@ -17,13 +17,18 @@ export const PasswordResetRequestForm = () => {
     setMessage(null);
     setIsError(false);
 
+    const formData = new FormData(event.currentTarget);
+    const submittedEmail = String(formData.get("email") ?? email);
+
+    setEmail(submittedEmail);
+
     startTransition(async () => {
-      const result = await requestPasswordResetAction(email);
+      const result = await requestPasswordResetAction(submittedEmail);
 
       setIsError(result.status === "error");
       setMessage(
         result.message ??
-          "Se o e-mail estiver cadastrado, enviamos as instrucoes de redefinicao.",
+          "Se o e-mail estiver cadastrado, enviaremos um link para redefinir sua senha.",
       );
     });
   };
@@ -39,9 +44,10 @@ export const PasswordResetRequestForm = () => {
         </label>
         <Input
           id="reset-email"
+          name="email"
           type="email"
           autoComplete="email"
-          placeholder="voce@empresa.com"
+          placeholder="seuemail@exemplo.com"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
         />
@@ -66,7 +72,7 @@ export const PasswordResetRequestForm = () => {
         disabled={isPending}
       >
         <Mail />
-        {isPending ? "Gerando link..." : "Enviar instrucoes"}
+        {isPending ? "Enviando link..." : "Enviar link por e-mail"}
       </Button>
     </form>
   );

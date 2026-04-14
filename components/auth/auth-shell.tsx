@@ -32,18 +32,18 @@ export const AuthShell = ({
             <BrandMark
               className="items-start text-white"
               titleClassName="text-white"
-              subtitle="Organizacao multiusuario com acesso protegido"
+              subtitle="Organize tarefas com seguranca e simplicidade"
             />
 
             <div className="mt-10 space-y-4">
               <h1 className="max-w-lg text-4xl font-semibold tracking-tight text-white">
-                Um painel de tarefas com hierarquia visual clara e autenticacao
-                real.
+                Centralize tarefas, acompanhe prioridades e mantenha sua equipe
+                alinhada em um so lugar.
               </h1>
               <p className="max-w-xl text-base text-slate-300">
-                Cada pessoa acessa apenas as proprias tarefas, com sessao
-                segura, recuperacao de acesso e navegacao adaptada para desktop
-                e mobile.
+                Visualize o que precisa ser feito, acesse sua conta com
+                facilidade e trabalhe com mais clareza tanto no computador
+                quanto no celular.
               </p>
             </div>
 
@@ -51,13 +51,13 @@ export const AuthShell = ({
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
                 <div className="flex items-center gap-3 text-sm font-medium text-white">
                   <ShieldCheck className="size-4 text-sky-300" />
-                  Validacao de acesso em rota e nas server actions
+                  Seus dados protegidos com acesso seguro a cada sessao
                 </div>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
                 <div className="flex items-center gap-3 text-sm font-medium text-white">
                   <Sparkles className="size-4 text-cyan-300" />
-                  Fluxo de login, cadastro e redefinicao com foco em usabilidade
+                  Entrada simples para criar conta, acessar e recuperar senha
                 </div>
               </div>
             </div>

@@ -17,11 +17,26 @@ export const PasswordSettingsForm = () => {
     event.preventDefault();
     setMessage(null);
 
+    const formData = new FormData(event.currentTarget);
+    const submittedCurrentPassword = String(
+      formData.get("currentPassword") ?? currentPassword,
+    );
+    const submittedNewPassword = String(
+      formData.get("newPassword") ?? newPassword,
+    );
+    const submittedConfirmPassword = String(
+      formData.get("confirmPassword") ?? confirmPassword,
+    );
+
+    setCurrentPassword(submittedCurrentPassword);
+    setNewPassword(submittedNewPassword);
+    setConfirmPassword(submittedConfirmPassword);
+
     startTransition(async () => {
       const result = await changePasswordAction({
-        currentPassword,
-        newPassword,
-        confirmPassword,
+        currentPassword: submittedCurrentPassword,
+        newPassword: submittedNewPassword,
+        confirmPassword: submittedConfirmPassword,
       });
 
       setIsSuccess(result.status === "success");
@@ -46,6 +61,7 @@ export const PasswordSettingsForm = () => {
         </label>
         <PasswordInput
           id="current-password"
+          name="currentPassword"
           autoComplete="current-password"
           value={currentPassword}
           onChange={(event) => setCurrentPassword(event.target.value)}
@@ -62,6 +78,7 @@ export const PasswordSettingsForm = () => {
           </label>
           <PasswordInput
             id="new-password-settings"
+            name="newPassword"
             autoComplete="new-password"
             value={newPassword}
             onChange={(event) => setNewPassword(event.target.value)}
@@ -76,6 +93,7 @@ export const PasswordSettingsForm = () => {
           </label>
           <PasswordInput
             id="confirm-password-settings"
+            name="confirmPassword"
             autoComplete="new-password"
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}

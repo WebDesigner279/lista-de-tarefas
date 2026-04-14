@@ -14,7 +14,7 @@ export default async function RecoverAccessPage() {
   return (
     <AuthShell
       title="Recuperar acesso"
-      description="Informe seu e-mail para gerar um link real de recuperacao. Se a conta existir, o envio sera feito para a caixa configurada no cadastro."
+      description="Informe seu e-mail e, se ele estiver cadastrado, enviaremos um link para voce criar uma nova senha."
       footer={
         <span>
           Lembrou a senha?{" "}

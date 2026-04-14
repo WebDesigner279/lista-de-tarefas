@@ -21,16 +21,29 @@ export const RegisterForm = () => {
     event.preventDefault();
     setMessage(null);
 
+    const formData = new FormData(event.currentTarget);
+    const submittedName = String(formData.get("name") ?? name);
+    const submittedEmail = String(formData.get("email") ?? email);
+    const submittedPassword = String(formData.get("password") ?? password);
+    const submittedConfirmPassword = String(
+      formData.get("confirmPassword") ?? confirmPassword,
+    );
+
+    setName(submittedName);
+    setEmail(submittedEmail);
+    setPassword(submittedPassword);
+    setConfirmPassword(submittedConfirmPassword);
+
     startTransition(async () => {
       const result = await registerAction({
-        name,
-        email,
-        password,
-        confirmPassword,
+        name: submittedName,
+        email: submittedEmail,
+        password: submittedPassword,
+        confirmPassword: submittedConfirmPassword,
       });
 
       if (result.status === "error") {
-        setMessage(result.message ?? "Nao foi possivel criar a conta.");
+        setMessage(result.message ?? "Nao conseguimos criar sua conta.");
         return;
       }
 
@@ -50,8 +63,9 @@ export const RegisterForm = () => {
         </label>
         <Input
           id="register-name"
+          name="name"
           autoComplete="name"
-          placeholder="Como voce quer aparecer"
+          placeholder="Como seu nome deve aparecer"
           value={name}
           onChange={(event) => setName(event.target.value)}
         />
@@ -66,9 +80,10 @@ export const RegisterForm = () => {
         </label>
         <Input
           id="register-email"
+          name="email"
           type="email"
           autoComplete="email"
-          placeholder="voce@empresa.com"
+          placeholder="seuemail@exemplo.com"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
         />
@@ -84,6 +99,7 @@ export const RegisterForm = () => {
           </label>
           <PasswordInput
             id="register-password"
+            name="password"
             autoComplete="new-password"
             placeholder="Minimo de 8 caracteres"
             value={password}
@@ -100,6 +116,7 @@ export const RegisterForm = () => {
           </label>
           <PasswordInput
             id="register-password-confirmation"
+            name="confirmPassword"
             autoComplete="new-password"
             placeholder="Repita a senha"
             value={confirmPassword}
@@ -109,7 +126,8 @@ export const RegisterForm = () => {
       </div>
 
       <div className="rounded-2xl border border-border/70 bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
-        Use uma senha com pelo menos 8 caracteres, combinando letras e numeros.
+        Crie uma senha com pelo menos 8 caracteres, usando letras e numeros para
+        proteger sua conta.
       </div>
 
       {message ? (

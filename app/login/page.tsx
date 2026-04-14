@@ -14,7 +14,7 @@ export default async function LoginPage() {
   return (
     <AuthShell
       title="Entrar"
-      description="Acesse seu ambiente para gerenciar tarefas com seguranca e contexto proprio por usuario."
+      description="Entre para acompanhar suas tarefas, prioridades e atividades em seu painel."
       footer={
         <span>
           Ainda nao tem conta?{" "}

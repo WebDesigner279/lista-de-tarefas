@@ -24,7 +24,7 @@ export default async function ResetAccessPage({
   return (
     <AuthShell
       title="Redefinir acesso"
-      description="Escolha uma nova senha para sua conta. O link expira automaticamente para reduzir risco de uso indevido."
+      description="Defina uma nova senha para voltar a acessar sua conta com seguranca."
       footer={
         <span>
           Quer tentar de novo?{" "}

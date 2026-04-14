@@ -23,19 +23,28 @@ export const PasswordResetForm = ({ token }: PasswordResetFormProps) => {
     setMessage(null);
     setIsSuccess(false);
 
+    const formData = new FormData(event.currentTarget);
+    const submittedPassword = String(formData.get("password") ?? password);
+    const submittedConfirmPassword = String(
+      formData.get("confirmPassword") ?? confirmPassword,
+    );
+
+    setPassword(submittedPassword);
+    setConfirmPassword(submittedConfirmPassword);
+
     startTransition(async () => {
       const result = await resetPasswordAction({
         token,
-        password,
-        confirmPassword,
+        password: submittedPassword,
+        confirmPassword: submittedConfirmPassword,
       });
 
       setIsSuccess(result.status === "success");
       setMessage(
         result.message ??
           (result.status === "success"
-            ? "Senha atualizada com sucesso."
-            : "Nao foi possivel redefinir a senha."),
+            ? "Sua senha foi atualizada com sucesso."
+            : "Nao conseguimos atualizar sua senha."),
       );
 
       if (result.status === "success") {
@@ -48,7 +57,8 @@ export const PasswordResetForm = ({ token }: PasswordResetFormProps) => {
   if (!token) {
     return (
       <div className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-        O link de redefinicao esta incompleto. Solicite um novo acesso.
+        Este link de redefinicao nao e valido. Solicite um novo e-mail de
+        recuperacao.
       </div>
     );
   }
@@ -64,6 +74,7 @@ export const PasswordResetForm = ({ token }: PasswordResetFormProps) => {
         </label>
         <PasswordInput
           id="new-password"
+          name="password"
           autoComplete="new-password"
           placeholder="Digite a nova senha"
           value={password}
@@ -80,6 +91,7 @@ export const PasswordResetForm = ({ token }: PasswordResetFormProps) => {
         </label>
         <PasswordInput
           id="confirm-new-password"
+          name="confirmPassword"
           autoComplete="new-password"
           placeholder="Repita a nova senha"
           value={confirmPassword}
@@ -98,12 +110,12 @@ export const PasswordResetForm = ({ token }: PasswordResetFormProps) => {
           <p>{message}</p>
           {isSuccess ? (
             <p className="mt-2 text-sm text-muted-foreground">
-              Agora voce pode{" "}
+              Agora voce ja pode{" "}
               <Link
                 href="/login"
                 className="font-medium text-primary hover:text-primary/80"
               >
-                entrar com a nova senha
+                entrar com sua nova senha
               </Link>
               .
             </p>
@@ -118,7 +130,7 @@ export const PasswordResetForm = ({ token }: PasswordResetFormProps) => {
         disabled={isPending}
       >
         <KeyRound />
-        {isPending ? "Atualizando senha..." : "Salvar nova senha"}
+        {isPending ? "Atualizando senha..." : "Atualizar senha"}
       </Button>
     </form>
   );
