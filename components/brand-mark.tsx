@@ -19,7 +19,7 @@ export const BrandMark = ({
 }: BrandMarkProps) => {
   const content = (
     <div className={cn("flex items-center gap-3", className)}>
-      <div className="flex size-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/25">
+      <div className="flex size-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
         <ListTodo className="size-5" />
       </div>
       <div className="space-y-0.5">

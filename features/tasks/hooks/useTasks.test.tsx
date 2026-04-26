@@ -36,6 +36,7 @@ const buildTask = (overrides: Partial<TaskRecord> = {}): TaskRecord => ({
   id: "task-1",
   task: "Comprar leite",
   done: false,
+  userId: "user-1",
   ...overrides,
 });
 
@@ -52,10 +53,14 @@ beforeEach(() => {
   pollingCallback = undefined;
   vi.spyOn(globalThis, "queueMicrotask").mockImplementation(() => undefined);
   vi.spyOn(window, "setInterval").mockImplementation(
-    (handler: TimerHandler) => {
-      pollingCallback = typeof handler === "function" ? handler : undefined;
+    (((handler: TimerHandler) => {
+      pollingCallback =
+        typeof handler === "function"
+          ? (handler as () => void)
+          : undefined;
+
       return 1;
-    },
+    }) as unknown) as typeof window.setInterval,
   );
   vi.spyOn(window, "clearInterval").mockImplementation(() => undefined);
 });

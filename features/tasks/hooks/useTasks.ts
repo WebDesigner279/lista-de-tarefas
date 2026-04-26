@@ -141,6 +141,7 @@ export const useTasks = ({ initialTasks }: UseTasksOptions = {}) => {
             id: optimisticTaskId,
             task: normalizedTask,
             done: false,
+            userId: null,
           });
         } catch (error) {
           if (isTaskError(error, TaskErrorCode.NameTooLong)) {

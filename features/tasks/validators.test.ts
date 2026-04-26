@@ -9,6 +9,10 @@ import {
 } from "@/features/tasks/validators";
 
 describe("validators", () => {
+  it("mantem o limite maximo de 70 caracteres por tarefa", () => {
+    expect(MAX_TASK_LENGTH).toBe(70);
+  });
+
   it("normaliza o nome da tarefa removendo espacos externos", () => {
     expect(normalizeTaskName("  Comprar leite  ")).toBe("Comprar leite");
   });

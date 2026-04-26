@@ -21,11 +21,11 @@ const getFilterSummaryLabel = (
   completedTasks: number,
 ) => {
   if (activeFilter === "open") {
-    return `Nao finalizadas ${openTasks} / ${totalTasks}`;
+    return `Não finalizadas ${openTasks} / ${totalTasks}`;
   }
 
   if (activeFilter === "done") {
-    return `Concluidas ${completedTasks} / ${totalTasks}`;
+    return `Concluídas ${completedTasks} / ${totalTasks}`;
   }
 
   return `Todos ${totalTasks} / ${totalTasks}`;
@@ -49,33 +49,34 @@ export const TaskStats = memo(
 
     return (
       <>
-        <div className="flex justify-between items-center mt-4">
-          <div className="flex gap-2 items-center mt-2">
-            <ListCheck size={16} className="text-blue-500 mb-2" />
-            <p className="text-xs mb-2">{filterSummaryLabel}</p>
+        <div className="mt-5 flex items-center justify-between gap-3">
+          <div className="min-w-0 flex items-center gap-2 text-sm text-slate-700">
+            <ListCheck className="size-4 text-blue-500" />
+            <p className="truncate">{filterSummaryLabel}</p>
           </div>
 
           <Button
-            className="text-red-500 w-38 h-7 cursor-pointer"
+            className="shrink-0 cursor-pointer rounded-full px-3 text-red-500"
             variant="outline"
+            size="sm"
             onClick={onClearCompletedTasks}
             disabled={completedTasks === 0}
           >
-            <Trash2 size={16} />
+            <Trash2 className="size-4" />
             Limpar concluídas
           </Button>
         </div>
 
-        <div className="h-2 w-full bg-gray-100 mt-4 rounded-md">
+        <div className="mt-4 h-2.5 w-full rounded-full bg-slate-100">
           <div
-            className="h-full bg-blue-500 rounded-md"
+            className="h-full rounded-full bg-blue-500 transition-[width] duration-300"
             style={{ width: `${completionPercentage}%` }}
           />
         </div>
 
-        <div className="flex justify-end items-center mt-2 gap-2">
-          <SquareSigma size={16} />
-          <p className="text-xs">{totalTasks} tarefas no total</p>
+        <div className="mt-3 flex items-center justify-end gap-2 text-sm text-slate-700">
+          <SquareSigma className="size-4" />
+          <p>{totalTasks} tarefas no total</p>
         </div>
       </>
     );

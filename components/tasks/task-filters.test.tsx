@@ -13,8 +13,8 @@ describe("TaskFilters", () => {
     render(<TaskFilters activeFilter="all" onFilterChange={vi.fn()} />);
 
     expect(screen.getByText("Todos")).toBeDefined();
-    expect(screen.getByText("Nao finalizadas")).toBeDefined();
-    expect(screen.getByText("Concluidas")).toBeDefined();
+    expect(screen.getByText("Não finalizadas")).toBeDefined();
+    expect(screen.getByText("Concluídas")).toBeDefined();
   });
 
   it("notifica quando o usuario escolhe outro filtro", () => {
@@ -22,7 +22,7 @@ describe("TaskFilters", () => {
 
     render(<TaskFilters activeFilter="all" onFilterChange={onFilterChange} />);
 
-    fireEvent.click(screen.getByText("Concluidas"));
+    fireEvent.click(screen.getByText("Concluídas"));
 
     expect(onFilterChange).toHaveBeenCalledWith("done");
   });

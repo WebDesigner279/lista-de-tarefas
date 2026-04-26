@@ -2,6 +2,7 @@ export interface TaskRecord {
   id: string;
   task: string;
   done: boolean;
+  userId: string | null;
 }
 
 export type TaskFilter = "all" | "open" | "done";

@@ -16,6 +16,7 @@ const buildTask = (overrides: Partial<TaskRecord>): TaskRecord => ({
   id: "task-1",
   task: "Comprar leite",
   done: false,
+  userId: "user-1",
   ...overrides,
 });
 

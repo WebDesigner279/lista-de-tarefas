@@ -16,7 +16,7 @@ const PAGE_SHELL_CLASS_NAME =
   "mx-auto flex w-full max-w-6xl justify-center px-3 py-6 sm:px-4 sm:py-8";
 const PAGE_CONTENT_WIDTH_CLASS_NAME = "w-full max-w-4xl";
 const TASK_CARD_CLASS_NAME =
-  "w-full overflow-hidden border-white/80 bg-white/90 p-4 shadow-2xl shadow-slate-200/60 backdrop-blur sm:p-5";
+  "w-full overflow-hidden rounded-[30px] border border-white/80 bg-white/90 p-5 backdrop-blur sm:p-6";
 
 interface HomeClientPageProps {
   initialTasks: TaskRecord[];

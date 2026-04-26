@@ -21,7 +21,7 @@ describe("TaskStats", () => {
       />,
     );
 
-    expect(screen.getByText("Nao finalizadas 3 / 5")).toBeDefined();
+    expect(screen.getByText("Não finalizadas 3 / 5")).toBeDefined();
     expect(screen.getByText("5 tarefas no total")).toBeDefined();
   });
 

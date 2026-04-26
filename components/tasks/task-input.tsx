@@ -13,7 +13,7 @@ interface TaskInputProps {
 
 const TASK_INPUT_PLACEHOLDER = "Adicionar tarefa ou varias...";
 const TASK_INPUT_HELPER_TEXT =
-  "Separe varias tarefas com virgula para cadastrar tudo de uma vez.";
+  "Separe várias tarefas com vírgula para cadastrar tudo de uma vez.";
 
 export const TaskInput = ({
   onCreateTask,
@@ -41,7 +41,7 @@ export const TaskInput = ({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
         <Input
           placeholder={TASK_INPUT_PLACEHOLDER}
           value={taskNameInput}
@@ -49,19 +49,21 @@ export const TaskInput = ({
           onKeyDown={handleInputKeyDown}
           disabled={isDisabled}
           maxLength={MAX_TASK_LENGTH * 5}
-          className="focus:outline-none focus:ring-0 focus-visible:ring-0 focus:border-transparent"
+          className="h-11 rounded-2xl border-slate-200 px-4 text-base focus:border-slate-200 focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
         />
         <Button
-          className="cursor-pointer"
+          className="size-11 shrink-0 cursor-pointer rounded-full px-0 text-base font-semibold sm:h-11 sm:min-w-36 sm:rounded-2xl sm:px-5"
           variant="default"
           onClick={() => void handleSubmit()}
           disabled={isSubmitDisabled}
         >
-          <Plus />
-          Cadastrar
+          <Plus className="size-4" />
+          <span className="hidden sm:inline">Cadastrar</span>
         </Button>
       </div>
-      <p className="text-xs text-muted-foreground">{TASK_INPUT_HELPER_TEXT}</p>
+      <p className="max-w-md text-sm leading-5 text-muted-foreground">
+        {TASK_INPUT_HELPER_TEXT}
+      </p>
     </div>
   );
 };

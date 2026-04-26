@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { MAX_TASK_LENGTH } from "@/features/tasks/constants";
 import { TaskErrorCode } from "@/features/tasks/errors";
 import { TaskRecord } from "@/features/tasks/types";
 
@@ -43,6 +44,7 @@ const buildTask = (overrides: Partial<TaskRecord> = {}): TaskRecord => ({
   id: "task-1",
   task: "Comprar leite",
   done: false,
+  userId: USER_ID,
   ...overrides,
 });
 
@@ -76,6 +78,8 @@ describe("service", () => {
   });
 
   it("cria tarefas em lote e separa duplicadas e invalidas", async () => {
+    const tooLongTaskName = "x".repeat(MAX_TASK_LENGTH + 1);
+
     vi.mocked(findTasksByNamesInsensitive).mockResolvedValue([
       buildTask({ id: "db-1", task: "Estudar" }),
     ]);
@@ -85,13 +89,13 @@ describe("service", () => {
 
     const result = await createTasks(
       USER_ID,
-      "Comprar leite, Estudar, comprar leite, " + "x".repeat(35),
+      `Comprar leite, Estudar, comprar leite, ${tooLongTaskName}`,
     );
 
     expect(result).toEqual({
       createdTasks: [buildTask({ id: "created-1", task: "Comprar leite" })],
       duplicateTasks: ["comprar leite", "Estudar"],
-      invalidTasks: ["xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"],
+      invalidTasks: [tooLongTaskName],
     });
   });
 
